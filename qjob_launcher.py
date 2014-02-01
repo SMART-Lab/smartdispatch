@@ -1,5 +1,10 @@
 import os, sys
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('command', nargs='?', default='python', help='Program used (ex: python)')
+args = parser.parse_args()
+print args.command
 
 f = open('jobCommands.sh', 'w')
 f.write('#!/bin/bash\n')
