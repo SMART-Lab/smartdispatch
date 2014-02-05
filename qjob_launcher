@@ -82,9 +82,9 @@ def main():
         list_qsubFiles += [qsubFile]
 
     # Launch the jobs with QSUB
-    if not args.doNotLaunchJobs:
-        for qsubFile in list_qsubFiles:
-            check_output('qsub' + qsubFile, shell=True)
+    #if not args.doNotLaunchJobs:
+    #    for qsubFile in list_qsubFiles:
+    #        check_output('qsub' + qsubFile, shell=True)
 
 
 def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLogs, queue, walltime, currentDir, useCuda):
