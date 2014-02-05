@@ -53,7 +53,7 @@ def main():
         os.makedirs(pathQsubFolder)
     
     # Generate the list of jobs with all the possible combination of the given values
-    list_jobs_str = ['#cd $SRC ;']
+    list_jobs_str = ['cd $SRC ;']
     list_jobsOutput_folderName = ['']
     for argument in list_commandAndOptions:
         list_jobs_tmp = []
@@ -80,9 +80,10 @@ def main():
         list_qsubFiles += [qsubFile]
 
     # Launch the jobs with QSUB
-    #if not args.doNotLaunchJobs:
-    #    for qsubFile in list_qsubFiles:
-    #        check_output('qsub' + qsubFile, shell=True)
+    if not args.doNotLaunchJobs:
+        for qsubFile in list_qsubFiles:
+            qsub_output = check_output('qsub ' + qsubFile, shell=True)
+            print qsub_output
 
 
 def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLogs, queue, walltime, currentDir, useCuda):
@@ -94,18 +95,19 @@ def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLo
     f.write('#--Exporting environment variables from the submission shell to the job shell\n')
     f.write('#PBS -V\n')
     f.write('#PBS -l walltime=' + walltime + '\n')
-    f.write('#module load cuda\n')
-    f.write('#SRC=' + currentDir + '\n')
+    if useCuda:
+        f.write('module load cuda\n')
+    f.write('SRC=' + currentDir + '\n')
     f.write('\n\n\n')
 
     ## Example of a line for one job for QSUB
     #f.write('#cd $SRC ; python -u trainAutoEnc2.py 10 80 sigmoid 0.1 vocKL_sarath_german True True > trainAutoEnc2.py-10-80-sigmoid-0.1-vocKL_sarath_german-True-True &\n')
 
     for job, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
-        f.write(job + ' > ' + os.path.join(subPathLogs, folderName) + ' &\n')
+        f.write(job + ' &> ' + os.path.join(subPathLogs, folderName) + ' &\n')
 
     f.write('\n\n\n')
-    f.write('#wait\n')
+    f.write('wait\n')
     f.close()
 
     
