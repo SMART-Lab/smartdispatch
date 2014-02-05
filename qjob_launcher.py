@@ -18,10 +18,7 @@ def main():
     
     # Define the number of core by nodes for a specific cluster
     if args.nbCore != None:
-        if type(args.nbCore) == int and args.nbCore > 0:
-            nbCoreByNode = args.nbCore
-        else:
-            sys.exit('Wrong value for --nbCore')
+        nbCoreByNode = int(args.nbCore)
     elif args.queue == 'qfat256@mp2' or  args.queue == 'qfat512@mp2':
         nbCoreByNode = 48
     else:
@@ -42,9 +39,10 @@ def main():
     nameFolderSavingLogs = ''
     for argument in list_commandAndOptions:
         str_tmp = argument[0][-30:] + ('' if len(argument) == 1 else ('-' + argument[-1][-30:]))
+        str_tmp = str_tmp.split('/')[-1] # Deal with path as parameter
         nameFolderSavingLogs += str_tmp if nameFolderSavingLogs == '' else ('__' + str_tmp)
     current_time = datetime.datetime.now()
-    nameFolderSavingLogs = current_time.isoformat() + '___' + nameFolderSavingLogs
+    nameFolderSavingLogs = current_time.isoformat() + '___' + nameFolderSavingLogs[:227] #No more than 256 character
     subPathLogs = os.path.join(pathLogs, nameFolderSavingLogs)
     if not os.path.exists(subPathLogs):
         os.makedirs(subPathLogs)
