@@ -61,7 +61,8 @@ def main():
         for valueForArg in argument:
             for job_str, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
                 list_jobs_tmp += [job_str + ' ' + valueForArg]
-                list_folderName_tmp += [valueForArg[-30:]] if folderName == '' else [folderName + '-' + valueForArg[-30:]]
+                valueForArg_tmp = valueForArg[-30:].split('/')[-1]  # Deal with path as parameter
+                list_folderName_tmp += [valueForArg_tmp] if folderName == '' else [folderName + '-' + valueForArg_tmp]
         list_jobs_str = list_jobs_tmp
         list_jobsOutput_folderName = list_folderName_tmp
           
