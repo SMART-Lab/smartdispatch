@@ -27,7 +27,10 @@ def main():
     # list_commandAndOptions must be a list of lists
     list_commandAndOptions = []
     for opt in args.commandAndOptions:
-        list_commandAndOptions += [opt.split()]
+        opt_split = opt.split()
+        for i, split in enumerate(opt_split):
+            opt_split[i] = os.path.normpath(split) # If the arg value is a path, remove the final '/' if there is one at the end.
+        list_commandAndOptions += [opt_split]
     
     # Creating the LOGS folder
     currentDir = os.getcwd()
