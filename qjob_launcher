@@ -42,7 +42,7 @@ def main():
         str_tmp = str_tmp.split('/')[-1] # Deal with path as parameter
         nameFolderSavingLogs += str_tmp if nameFolderSavingLogs == '' else ('__' + str_tmp)
     current_time = datetime.datetime.now()
-    nameFolderSavingLogs = current_time.isoformat() + '___' + nameFolderSavingLogs[:227] #No more than 256 character
+    nameFolderSavingLogs = current_time.isoformat() + '___' + nameFolderSavingLogs[:220] #No more than 256 character
     subPathLogs = os.path.join(pathLogs, nameFolderSavingLogs)
     if not os.path.exists(subPathLogs):
         os.makedirs(subPathLogs)
@@ -83,7 +83,7 @@ def main():
     if not args.doNotLaunchJobs:
         for qsubFile in list_qsubFiles:
             qsub_output = check_output('qsub ' + qsubFile, shell=True)
-            print qsub_output
+            print qsub_output,
 
 
 def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLogs, queue, walltime, currentDir, useCuda):
