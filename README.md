@@ -1,7 +1,7 @@
-qsubCommandLauncher
+Smart Dispatch
 ===================
 
-Development of a command that launch job on the super computer Mammuth.
+A batch job launcher for the Mammouth supercomputer.
 
 Add the path to the .bashrc file:
 export PATH=$PATH:/Users/ ... /qsubCommandLauncher
