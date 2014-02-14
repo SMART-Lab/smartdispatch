@@ -1,60 +1,75 @@
 #!/usr/bin/env python
-import os, sys
+import os
+import sys
 import argparse
 import datetime
 import numpy as np
 from subprocess import check_output
 
+
 def main():
+
+    availableQueues = {
+                       'qtest@mp2' : {'coresPerNode' : 24, 'maxWalltime' : '00:01:00:00'},
+                       'qwork@mp2' : {'coresPerNode' : 24, 'maxWalltime' : '05:00:00:00'},
+                       'qfbb@mp2' : {'coresPerNode' : 288, 'maxWalltime' : '05:00:00:00'},
+                       'qfat256@mp2' : {'coresPerNode' : 48, 'maxWalltime' : '05:00:00:00'},
+                       'qfat512@mp2' : {'coresPerNode' : 48, 'maxWalltime' : '02:00:00:00'},
+
+                       'qtest@ms' : {'coresPerNode' : 8, 'maxWalltime' : '00:01:00:00'},
+                       'qwork@ms' : {'coresPerNode' : 8, 'maxWalltime' : '05:00:00:00'},
+                       'qlong@ms' : {'coresPerNode' : 8, 'maxWalltime' : '41:16:00:00'},
+
+                       #'qwork@brume' : {'coresPerNode' : 0, 'maxWalltime' : '05:00:00:00'} # coresPerNode is variable and not relevant for this queue
+                      }
+
     # Parse the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-q', '--queue', required=False, default='qwork@mp2', help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
-    parser.add_argument('-t', '--time', required=False, default='5:00:00:00', help='Time we need for the jobs')
-    parser.add_argument('-n', '--nbCore', required=False, help='Set the number of core by nodes')
-    parser.add_argument('-c', '--cuda', action='store_true', help='Loading cuda module')
-    parser.add_argument('-x', '--doNotLaunchJobs', action='store_true', help='Create the QSUB files but dont launch them')
+    parser.add_argument('-q', '--queueName', required=False, default='qwork@mp2', help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
+    parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
+    parser.add_argument('-n', '--jobsPerNode', type=int, required=False, help='Set the number of jobs per nodes.')
+    parser.add_argument('-c', '--cuda', action='store_true', help='Load CUDA before executing your code.')
+    parser.add_argument('-x', '--doNotLaunchJobs', action='store_true', help='Creates the QSUB files without launching them.')
     parser.add_argument("commandAndOptions", help="Options for the command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
-    
+
     # Define the number of core by nodes for a specific cluster
-    if args.nbCore != None:
-        nbCoreByNode = int(args.nbCore)    
-    elif args.queue == 'qfat256@mp2' or  args.queue == 'qfat512@mp2':
-        nbCoreByNode = 48
+    if args.jobsPerNode != None:
+        nbCoreByNode = args.jobsPerNode
     else:
-        nbCoreByNode = 24
-    
+        nbCoreByNode = availableQueues[args.queueName]['coresPerNode']
+
     # list_commandAndOptions must be a list of lists
     list_commandAndOptions = []
     for opt in args.commandAndOptions:
         opt_split = opt.split()
         for i, split in enumerate(opt_split):
-            opt_split[i] = os.path.normpath(split) # If the arg value is a path, remove the final '/' if there is one at the end.
+            opt_split[i] = os.path.normpath(split)  # If the arg value is a path, remove the final '/' if there is one at the end.
         list_commandAndOptions += [opt_split]
-    
+
     # Creating the LOGS folder
     currentDir = os.getcwd()
     pathLogs = os.path.join(currentDir, 'LOGS_QSUB')
     if not os.path.exists(pathLogs):
         os.makedirs(pathLogs)
-    
+
     # Creating the folder in 'LOGS_QSUB' where the info will be saved
     nameFolderSavingLogs = ''
     for argument in list_commandAndOptions:
         str_tmp = argument[0][-30:] + ('' if len(argument) == 1 else ('-' + argument[-1][-30:]))
-        str_tmp = str_tmp.split('/')[-1] # Deal with path as parameter
+        str_tmp = str_tmp.split('/')[-1]  # Deal with path as parameter
         nameFolderSavingLogs += str_tmp if nameFolderSavingLogs == '' else ('__' + str_tmp)
     current_time = datetime.datetime.now()
-    nameFolderSavingLogs = current_time.isoformat() + '___' + nameFolderSavingLogs[:220] #No more than 256 character
+    nameFolderSavingLogs = current_time.isoformat() + '___' + nameFolderSavingLogs[:220]  # No more than 256 character
     subPathLogs = os.path.join(pathLogs, nameFolderSavingLogs)
     if not os.path.exists(subPathLogs):
         os.makedirs(subPathLogs)
-    
+
     # Creating the folder where the QSUB files will be saved
     pathQsubFolder = os.path.join(subPathLogs, 'QSUB_commands')
     if not os.path.exists(pathQsubFolder):
         os.makedirs(pathQsubFolder)
-    
+
     # Generate the list of jobs with all the possible combination of the given values
     list_jobs_str = ['cd $SRC ;']
     list_jobsOutput_folderName = ['']
@@ -68,19 +83,19 @@ def main():
                 list_folderName_tmp += [valueForArg_tmp] if folderName == '' else [folderName + '-' + valueForArg_tmp]
         list_jobs_str = list_jobs_tmp
         list_jobsOutput_folderName = list_folderName_tmp
-          
+
     # Distribute equally the jobs among the QSUB files and generate those files
     nbJobsTotal = len(list_jobs_str)
-    nbQsubFiles = int(np.ceil(nbJobsTotal/float(nbCoreByNode)))
-    nbJobPerFile =  int(np.ceil(nbJobsTotal/float(nbQsubFiles)))
+    nbQsubFiles = int(np.ceil(nbJobsTotal / float(nbCoreByNode)))
+    nbJobPerFile = int(np.ceil(nbJobsTotal / float(nbQsubFiles)))
     list_qsubFiles = []
     for i in range(nbQsubFiles):
-        start = i*nbJobPerFile
-        end = (i+1)*nbJobPerFile
+        start = i * nbJobPerFile
+        end = (i + 1) * nbJobPerFile
         if end > nbJobsTotal:
             end = nbJobsTotal
         qsubFile = os.path.join(pathQsubFolder, 'jobCommands_' + str(i) + '.sh')
-        writeQsubFile(list_jobs_str[start:end], list_jobsOutput_folderName[start:end], qsubFile, subPathLogs, args.queue, args.time, currentDir, args.cuda)
+        writeQsubFile(list_jobs_str[start:end], list_jobsOutput_folderName[start:end], qsubFile, subPathLogs, args.queue, args.walltime, currentDir, args.cuda)
         list_qsubFiles += [qsubFile]
 
     # Launch the jobs with QSUB
@@ -104,8 +119,8 @@ def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLo
     f.write('SRC=' + currentDir + '\n')
     f.write('\n\n\n')
 
-    ## Example of a line for one job for QSUB
-    #f.write('#cd $SRC ; python -u trainAutoEnc2.py 10 80 sigmoid 0.1 vocKL_sarath_german True True > trainAutoEnc2.py-10-80-sigmoid-0.1-vocKL_sarath_german-True-True &\n')
+    # Example of a line for one job for QSUB
+    # f.write('#cd $SRC ; python -u trainAutoEnc2.py 10 80 sigmoid 0.1 vocKL_sarath_german True True > trainAutoEnc2.py-10-80-sigmoid-0.1-vocKL_sarath_german-True-True &\n')
 
     for job, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
         f.write(job + ' &> ' + os.path.join(subPathLogs, folderName) + ' &\n')
@@ -113,9 +128,6 @@ def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLo
     f.write('\n\n\n')
     f.write('wait\n')
     f.close()
-
-    
-
 
 
 if __name__ == "__main__":
