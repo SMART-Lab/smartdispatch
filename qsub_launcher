@@ -21,6 +21,57 @@ availableQueues = {
 }
 
 
+def main():
+    args = parseArguments()
+
+    # list_commandAndOptions must be a list of lists
+    list_commandAndOptions = []
+    for opt in args.commandAndOptions:
+        opt_split = opt.split()
+        for i, split in enumerate(opt_split):
+            opt_split[i] = os.path.normpath(split)  # If the arg value is a path, remove the final '/' if there is one at the end.
+        list_commandAndOptions += [opt_split]
+
+    subPathLogs, pathQsubFolder = createJobsFolder(list_commandAndOptions)
+
+    # Generate the list of jobs with all the possible combination of the given values
+    list_jobs_str = ['cd $SRC_DIR_SMART_LAUNCHER;']
+    list_jobsOutput_folderName = ['']
+    for argument in list_commandAndOptions:
+        list_jobs_tmp = []
+        list_folderName_tmp = []
+        for valueForArg in argument:
+            for job_str, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
+                list_jobs_tmp += [job_str + ' ' + valueForArg]
+                valueForArg_tmp = valueForArg[-30:].split('/')[-1]  # Deal with path as parameter
+                list_folderName_tmp += [valueForArg_tmp] if folderName == '' else [folderName + '-' + valueForArg_tmp]
+        list_jobs_str = list_jobs_tmp
+        list_jobsOutput_folderName = list_folderName_tmp
+
+
+
+    # Distribute equally the jobs among the QSUB files and generate those files
+    nbJobsTotal = len(list_jobs_str)
+    nbQsubFiles = int(np.ceil(nbJobsTotal / float(args.jobsPerNode)))
+    nbJobPerFile = int(np.ceil(nbJobsTotal / float(nbQsubFiles)))
+
+    qsubFilesToLaunch = []
+    for i in range(nbQsubFiles):
+        start = i * nbJobPerFile
+        end = (i + 1) * nbJobPerFile
+        if end > nbJobsTotal:
+            end = nbJobsTotal
+        qsubFileName = os.path.join(pathQsubFolder, 'jobCommands_' + str(i) + '.sh')
+        writeQsubFile(list_jobs_str[start:end], list_jobsOutput_folderName[start:end], qsubFileName, subPathLogs, args.queueName, args.walltime, os.getcwd(), args.cuda)
+        qsubFilesToLaunch += [qsubFileName]
+
+    # Launch the jobs with QSUB
+    if not args.doNotLaunchJobs:
+        for qsubFileName in qsubFilesToLaunch:
+            qsub_output = check_output('qsub ' + qsubFileName, shell=True)
+            print qsub_output,
+
+
 def parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
@@ -44,25 +95,11 @@ def parseArguments():
 
     return args
 
-def main():
 
-    args = parseArguments()
-
-    # list_commandAndOptions must be a list of lists
-    list_commandAndOptions = []
-    for opt in args.commandAndOptions:
-        opt_split = opt.split()
-        for i, split in enumerate(opt_split):
-            opt_split[i] = os.path.normpath(split)  # If the arg value is a path, remove the final '/' if there is one at the end.
-        list_commandAndOptions += [opt_split]
-
-    # Creating the LOGS folder
-    currentDir = os.getcwd()
+def createJobsFolder(list_commandAndOptions):
     pathLogs = os.path.join(os.getcwd(), 'LOGS_QSUB')
-    if not os.path.exists(pathLogs):
-        os.makedirs(pathLogs)
 
-    # Creating the folder in 'LOGS_QSUB' where the info will be saved
+    # Creating the folder in 'LOGS_QSUB' where the results will be saved
     nameFolderSavingLogs = ''
     for argument in list_commandAndOptions:
         str_tmp = argument[0][-30:] + ('' if len(argument) == 1 else ('-' + argument[-1][-30:]))
@@ -78,50 +115,16 @@ def main():
     pathQsubFolder = os.path.join(subPathLogs, 'QSUB_commands')
     if not os.path.exists(pathQsubFolder):
         os.makedirs(pathQsubFolder)
-
-    # Generate the list of jobs with all the possible combination of the given values
-    list_jobs_str = ['cd $SRC_DIR_SMART_LAUNCHER ;']
-    list_jobsOutput_folderName = ['']
-    for argument in list_commandAndOptions:
-        list_jobs_tmp = []
-        list_folderName_tmp = []
-        for valueForArg in argument:
-            for job_str, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
-                list_jobs_tmp += [job_str + ' ' + valueForArg]
-                valueForArg_tmp = valueForArg[-30:].split('/')[-1]  # Deal with path as parameter
-                list_folderName_tmp += [valueForArg_tmp] if folderName == '' else [folderName + '-' + valueForArg_tmp]
-        list_jobs_str = list_jobs_tmp
-        list_jobsOutput_folderName = list_folderName_tmp
-
-    # Distribute equally the jobs among the QSUB files and generate those files
-    nbJobsTotal = len(list_jobs_str)
-    nbQsubFiles = int(np.ceil(nbJobsTotal / float(args.jobsPerNode)))
-    nbJobPerFile = int(np.ceil(nbJobsTotal / float(nbQsubFiles)))
-
-    list_qsubFiles = []
-    for i in range(nbQsubFiles):
-        start = i * nbJobPerFile
-        end = (i + 1) * nbJobPerFile
-        if end > nbJobsTotal:
-            end = nbJobsTotal
-        qsubFile = os.path.join(pathQsubFolder, 'jobCommands_' + str(i) + '.sh')
-        writeQsubFile(list_jobs_str[start:end], list_jobsOutput_folderName[start:end], qsubFile, subPathLogs, args.queueName, args.walltime, currentDir, args.cuda)
-        list_qsubFiles += [qsubFile]
-
-    # Launch the jobs with QSUB
-    if not args.doNotLaunchJobs:
-        for qsubFile in list_qsubFiles:
-            qsub_output = check_output('qsub ' + qsubFile, shell=True)
-            print qsub_output,
+    return subPathLogs, pathQsubFolder
 
 
-def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLogs, queue, walltime, currentDir, useCuda):
+def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFileName, subPathLogs, queue, walltime, currentDir, useCuda):
     """
     Example of a line for one job for QSUB:
         cd $SRC ; python -u trainAutoEnc2.py 10 80 sigmoid 0.1 vocKL_sarath_german True True > trainAutoEnc2.py-10-80-sigmoid-0.1-vocKL_sarath_german-True-True &
     """
     # Creating the file that will be launch by QSUB
-    with open(qsubFile, 'w') as qsubJobFile:
+    with open(qsubFileName, 'w') as qsubJobFile:
         qsubJobFile.write('#!/bin/bash\n')
         qsubJobFile.write('#PBS -q ' + queue + '\n')
         qsubJobFile.write('#PBS -l nodes=1:ppn=1\n')
@@ -132,8 +135,9 @@ def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFile, subPathLo
             qsubJobFile.write('module load cuda\n')
         qsubJobFile.write('SRC_DIR_SMART_LAUNCHER=' + currentDir + '\n\n')
 
+        jobTemplate = "cd $SRC_DIR_SMART_LAUNCHER; {}  &> {} &\n"
         for job, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
-            qsubJobFile.write(job + ' &> ' + os.path.join(subPathLogs, folderName) + ' &\n')
+            qsubJobFile.write(jobTemplate.format(job, os.path.join(subPathLogs, folderName)))
 
         qsubJobFile.write('\nwait\n')
 
