@@ -34,21 +34,7 @@ def main():
 
     subPathLogs, pathQsubFolder = createJobsFolder(list_commandAndOptions)
 
-    # Generate the list of jobs with all the possible combination of the given values
-    list_jobs_str = ['cd $SRC_DIR_SMART_LAUNCHER;']
-    list_jobsOutput_folderName = ['']
-    for argument in list_commandAndOptions:
-        list_jobs_tmp = []
-        list_folderName_tmp = []
-        for valueForArg in argument:
-            for job_str, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
-                list_jobs_tmp += [job_str + ' ' + valueForArg]
-                valueForArg_tmp = valueForArg[-30:].split('/')[-1]  # Deal with path as parameter
-                list_folderName_tmp += [valueForArg_tmp] if folderName == '' else [folderName + '-' + valueForArg_tmp]
-        list_jobs_str = list_jobs_tmp
-        list_jobsOutput_folderName = list_folderName_tmp
-
-
+    list_jobs_str, list_jobsOutput_folderName = unfoldJobs(list_commandAndOptions)
 
     # Distribute equally the jobs among the QSUB files and generate those files
     nbJobsTotal = len(list_jobs_str)
@@ -82,18 +68,35 @@ def parseArguments():
     parser.add_argument("commandAndOptions", help="Options for the command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
+    # Check for invalid arguments
     if len(args.commandAndOptions) < 1:
         parser.error("You need to specify a command to launch.")
+    if args.queueName not in availableQueues and (args.jobsPerNode is None or args.walltime is None):
+        parser.error("Unknown queue, --jobsPerNode and --walltime must be set.")
 
-    #
-    # Define the number of core by nodes for a specific cluster
+    # Set queue defaults for non specified params
     if args.jobsPerNode is None:
         args.jobsPerNode = availableQueues[args.queueName]['coresPerNode']
-
     if args.walltime is None:
         args.walltime = availableQueues[args.queueName]['maxWalltime']
-
     return args
+
+
+def unfoldJobs(list_commandAndOptions):
+    list_jobs_str = ['']
+    list_jobsOutput_folderName = ['']
+
+    for argument in list_commandAndOptions:
+        list_jobs_tmp = []
+        list_folderName_tmp = []
+        for valueForArg in argument:
+            for job_str, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
+                list_jobs_tmp += [job_str + valueForArg + ' ']
+                valueForArg_tmp = valueForArg[-30:].split('/')[-1]  # Deal with path as parameter
+                list_folderName_tmp += [valueForArg_tmp] if folderName == '' else [folderName + '-' + valueForArg_tmp]
+        list_jobs_str = list_jobs_tmp
+        list_jobsOutput_folderName = list_folderName_tmp
+    return list_jobs_str, list_jobsOutput_folderName
 
 
 def createJobsFolder(list_commandAndOptions):
@@ -135,7 +138,7 @@ def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFileName, subPa
             qsubJobFile.write('module load cuda\n')
         qsubJobFile.write('SRC_DIR_SMART_LAUNCHER=' + currentDir + '\n\n')
 
-        jobTemplate = "cd $SRC_DIR_SMART_LAUNCHER; {}  &> {} &\n"
+        jobTemplate = "cd $SRC_DIR_SMART_LAUNCHER; {} &> {} &\n"
         for job, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
             qsubJobFile.write(jobTemplate.format(job, os.path.join(subPathLogs, folderName)))
 
