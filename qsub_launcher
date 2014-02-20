@@ -6,24 +6,22 @@ import numpy as np
 from subprocess import check_output
 
 
-def main():
+availableQueues = {
+    'qtest@mp2': {'coresPerNode': 24, 'maxWalltime': '00:01:00:00'},
+    'qwork@mp2': {'coresPerNode': 24, 'maxWalltime': '05:00:00:00'},
+    'qfbb@mp2': {'coresPerNode': 288, 'maxWalltime': '05:00:00:00'},
+    'qfat256@mp2': {'coresPerNode': 48, 'maxWalltime': '05:00:00:00'},
+    'qfat512@mp2': {'coresPerNode': 48, 'maxWalltime': '02:00:00:00'},
 
-    availableQueues = {
-        'qtest@mp2': {'coresPerNode': 24, 'maxWalltime': '00:01:00:00'},
-        'qwork@mp2': {'coresPerNode': 24, 'maxWalltime': '05:00:00:00'},
-        'qfbb@mp2': {'coresPerNode': 288, 'maxWalltime': '05:00:00:00'},
-        'qfat256@mp2': {'coresPerNode': 48, 'maxWalltime': '05:00:00:00'},
-        'qfat512@mp2': {'coresPerNode': 48, 'maxWalltime': '02:00:00:00'},
+    'qtest@ms': {'coresPerNode': 8, 'maxWalltime': '00:01:00:00'},
+    'qwork@ms': {'coresPerNode': 8, 'maxWalltime': '05:00:00:00'},
+    'qlong@ms': {'coresPerNode': 8, 'maxWalltime': '41:16:00:00'},
 
-        'qtest@ms': {'coresPerNode': 8, 'maxWalltime': '00:01:00:00'},
-        'qwork@ms': {'coresPerNode': 8, 'maxWalltime': '05:00:00:00'},
-        'qlong@ms': {'coresPerNode': 8, 'maxWalltime': '41:16:00:00'},
+    # 'qwork@brume' : {'coresPerNode' : 0, 'maxWalltime' : '05:00:00:00'} # coresPerNode is variable and not relevant for this queue
+}
 
-        # 'qwork@brume' : {'coresPerNode' : 0, 'maxWalltime' : '05:00:00:00'} # coresPerNode is variable and not relevant for this queue
-    }
 
-    #
-    # Parse the arguments
+def parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
@@ -38,15 +36,17 @@ def main():
 
     #
     # Define the number of core by nodes for a specific cluster
-    if args.jobsPerNode != None:
-        nbCoreByNode = args.jobsPerNode
-    else:
-        nbCoreByNode = availableQueues[args.queueName]['coresPerNode']
+    if args.jobsPerNode is None:
+        args.jobsPerNode = availableQueues[args.queueName]['coresPerNode']
 
-    if args.walltime != None:
-        walltime = args.walltime
-    else:
-        walltime = availableQueues[args.queueName]['maxWalltime']
+    if args.walltime is None:
+        args.walltime = availableQueues[args.queueName]['maxWalltime']
+
+    return args
+
+def main():
+
+    args = parseArguments()
 
     # list_commandAndOptions must be a list of lists
     list_commandAndOptions = []
@@ -57,6 +57,7 @@ def main():
         list_commandAndOptions += [opt_split]
 
     # Creating the LOGS folder
+    currentDir = os.getcwd()
     pathLogs = os.path.join(os.getcwd(), 'LOGS_QSUB')
     if not os.path.exists(pathLogs):
         os.makedirs(pathLogs)
@@ -94,7 +95,7 @@ def main():
 
     # Distribute equally the jobs among the QSUB files and generate those files
     nbJobsTotal = len(list_jobs_str)
-    nbQsubFiles = int(np.ceil(nbJobsTotal / float(nbCoreByNode)))
+    nbQsubFiles = int(np.ceil(nbJobsTotal / float(args.jobsPerNode)))
     nbJobPerFile = int(np.ceil(nbJobsTotal / float(nbQsubFiles)))
 
     list_qsubFiles = []
@@ -104,7 +105,7 @@ def main():
         if end > nbJobsTotal:
             end = nbJobsTotal
         qsubFile = os.path.join(pathQsubFolder, 'jobCommands_' + str(i) + '.sh')
-        writeQsubFile(list_jobs_str[start:end], list_jobsOutput_folderName[start:end], qsubFile, subPathLogs, args.queueName, walltime, currentDir, args.cuda)
+        writeQsubFile(list_jobs_str[start:end], list_jobsOutput_folderName[start:end], qsubFile, subPathLogs, args.queueName, args.walltime, currentDir, args.cuda)
         list_qsubFiles += [qsubFile]
 
     # Launch the jobs with QSUB
