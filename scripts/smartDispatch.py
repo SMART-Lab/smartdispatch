@@ -2,7 +2,7 @@
 import os
 import argparse
 import datetime
-import numpy as np
+import math
 from subprocess import check_output
 
 
@@ -44,8 +44,8 @@ def main():
 
     # Distribute equally the jobs among the QSUB files and generate those files
     nbJobsTotal = len(list_jobs_str)
-    nbQsubFiles = int(np.ceil(nbJobsTotal / float(args.jobsPerNode)))
-    nbJobPerFile = int(np.ceil(nbJobsTotal / float(nbQsubFiles)))
+    nbQsubFiles = int(math.ceil(nbJobsTotal / float(args.jobsPerNode)))
+    nbJobPerFile = int(math.ceil(nbJobsTotal / float(nbQsubFiles)))
 
     qsubFilesToLaunch = []
     for i in range(nbQsubFiles):
