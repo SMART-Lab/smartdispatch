@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name='SMART Dispatch',
+    name='Smart-Dispatch',
     version='0.0.1',
     author='Stanislas Lauly',
     packages=['smartDispatch'],
