@@ -24,17 +24,23 @@ availableQueues = {
 def main():
     args = parseArguments()
 
-    # list_commandAndOptions must be a list of lists
-    list_commandAndOptions = []
-    for opt in args.commandAndOptions:
-        opt_split = opt.split()
-        for i, split in enumerate(opt_split):
-            opt_split[i] = os.path.normpath(split)  # If the arg value is a path, remove the final '/' if there is one at the end.
-        list_commandAndOptions += [opt_split]
+    if args.file is not None:
+        # Jobs are listed in a file.
+        nameFolderSavingLogs = args.file
+        list_jobs_str, list_jobsOutput_folderName = get_jobs_from_file(args.file)
+    else:
+        # Jobs need to be parsed and unfold
+        list_commandAndOptions = []
+        for opt in args.commandAndOptions:
+            opt_split = opt.split()
+            for i, split in enumerate(opt_split):
+                opt_split[i] = os.path.normpath(split)  # If the arg value is a path, remove the final '/' if there is one at the end.
+            list_commandAndOptions += [opt_split]
 
-    subPathLogs, pathQsubFolder = createJobsFolder(list_commandAndOptions)
+        nameFolderSavingLogs = getFolderNameFromArguments(list_commandAndOptions)
+        list_jobs_str, list_jobsOutput_folderName = unfoldJobs(list_commandAndOptions)
 
-    list_jobs_str, list_jobsOutput_folderName = unfoldJobs(list_commandAndOptions)
+    subPathLogs, pathQsubFolder = createJobsFolder(nameFolderSavingLogs)
 
     # Distribute equally the jobs among the QSUB files and generate those files
     nbJobsTotal = len(list_jobs_str)
@@ -65,14 +71,17 @@ def parseArguments():
     parser.add_argument('-n', '--jobsPerNode', type=int, required=False, help='Set the number of jobs per nodes.')
     parser.add_argument('-c', '--cuda', action='store_true', help='Load CUDA before executing your code.')
     parser.add_argument('-x', '--doNotLaunchJobs', action='store_true', help='Creates the QSUB files without launching them.')
+    parser.add_argument('-f', '--file', required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
     parser.add_argument("commandAndOptions", help="Options for the command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     # Check for invalid arguments
-    if len(args.commandAndOptions) < 1:
+    if args.file is None and len(args.commandAndOptions) < 1:
         parser.error("You need to specify a command to launch.")
     if args.queueName not in availableQueues and (args.jobsPerNode is None or args.walltime is None):
         parser.error("Unknown queue, --jobsPerNode and --walltime must be set.")
+    if args.file is not None and not os.path.exists(args.file):
+        parser.error("File containing commands to launch does not exist: " + args.file)
 
     # Set queue defaults for non specified params
     if args.jobsPerNode is None:
@@ -80,6 +89,15 @@ def parseArguments():
     if args.walltime is None:
         args.walltime = availableQueues[args.queueName]['maxWalltime']
     return args
+
+
+def get_jobs_from_file(filename):
+    with open(filename) as f:
+        list_jobs_str = f.read().split('\n')
+
+    list_jobsOutput_folderName = ['{0}_command_{1}.log'.format(filename, i) for i in range(len(list_jobs_str))]
+
+    return list_jobs_str, list_jobsOutput_folderName
 
 
 def unfoldJobs(list_commandAndOptions):
@@ -99,17 +117,21 @@ def unfoldJobs(list_commandAndOptions):
     return list_jobs_str, list_jobsOutput_folderName
 
 
-def createJobsFolder(list_commandAndOptions):
-    pathLogs = os.path.join(os.getcwd(), 'LOGS_QSUB')
-
+def getFolderNameFromArguments(list_commandAndOptions):
     # Creating the folder in 'LOGS_QSUB' where the results will be saved
     nameFolderSavingLogs = ''
     for argument in list_commandAndOptions:
         str_tmp = argument[0][-30:] + ('' if len(argument) == 1 else ('-' + argument[-1][-30:]))
         str_tmp = str_tmp.split('/')[-1]  # Deal with path as parameter
         nameFolderSavingLogs += str_tmp if nameFolderSavingLogs == '' else ('__' + str_tmp)
+
     current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     nameFolderSavingLogs = current_time + '___' + nameFolderSavingLogs[:220]  # No more than 256 character
+    return nameFolderSavingLogs
+
+def createJobsFolder(nameFolderSavingLogs):
+    pathLogs = os.path.join(os.getcwd(), 'LOGS_QSUB')
+    
     subPathLogs = os.path.join(pathLogs, nameFolderSavingLogs)
     if not os.path.exists(subPathLogs):
         os.makedirs(subPathLogs)
@@ -138,7 +160,7 @@ def writeQsubFile(list_jobs_str, list_jobsOutput_folderName, qsubFileName, subPa
             qsubJobFile.write('module load cuda\n')
         qsubJobFile.write('SRC_DIR_SMART_LAUNCHER=' + currentDir + '\n\n')
 
-        jobTemplate = "cd $SRC_DIR_SMART_LAUNCHER; {} &> {} &\n"
+        jobTemplate = "cd $SRC_DIR_SMART_LAUNCHER; {0} &> {1} &\n"
         for job, folderName in zip(list_jobs_str, list_jobsOutput_folderName):
             qsubJobFile.write(jobTemplate.format(job, os.path.join(subPathLogs, folderName)))
 
