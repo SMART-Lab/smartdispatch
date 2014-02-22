@@ -29,11 +29,11 @@ def main():
     args = parse_arguments()
 
     if args.file is not None:
-        # Jobs are listed in a file.
+        # Commands are listed in a file.
         jobname = args.file.name
         commands, logs_name = read_commands(args.file)
     else:
-        # Jobs need to be parsed and unfold.
+        # Commands need to be parsed and unfold.
         arguments = []
         for opt in args.commandAndOptions:
             opt_split = opt.split()
@@ -56,9 +56,6 @@ def main():
         start = i * nb_commands_per_file
         end = (i + 1) * nb_commands_per_file
         
-        if end > nb_commands:
-            end = nb_commands
-
         qsub_filename = os.path.join(qsub_dir, 'jobCommands_' + str(i) + '.sh')
         write_qsub_file(commands[start:end], logs_name[start:end], qsub_filename, job_dir, args.queueName, args.walltime, os.getcwd(), args.cuda)
         qsub_filenames.append(qsub_filename)
@@ -140,16 +137,6 @@ def create_job_folders(jobname):
         os.makedirs(path_job_commands)
     
     return path_job_logs, path_job_commands
-
-    # subPathLogs = os.path.join(pathLogs, log_folder)
-    # if not os.path.exists(subPathLogs):
-    #     os.makedirs(subPathLogs)
-    #
-    # Creating the folder where the QSUB files will be saved
-    # qsub_folder_path = os.path.join(subPathLogs, 'QSUB_commands')
-    # if not os.path.exists(qsub_folder_path):
-    #     os.makedirs(qsub_folder_path)
-    # return subPathLogs, qsub_folder_path
 
 
 def write_qsub_file(commands, logs_name, qsub_filename, job_dir, queue, walltime, current_dir, use_cuda=False):
