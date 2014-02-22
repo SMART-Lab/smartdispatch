@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='Smart-Dispatch',
-    version='0.0.1',
+    version='0.0.2',
     author='Stanislas Lauly',
     packages=['smartDispatch'],
     scripts=['scripts/smartDispatch.py'],
