@@ -30,7 +30,7 @@ def main():
     if args.file is not None:
         # Commands are listed in a file.
         jobname = args.file.name
-        commands, logfiles_name = read_commands(args.file)
+        commands, logfiles_name = get_command_from_file(args.file)
     else:
         # Commands that needs to be parsed and unfolded.
         arguments = []
@@ -41,7 +41,7 @@ def main():
             arguments += [opt_split]
 
         jobname = generate_name(arguments)
-        commands, logfiles_name = unfold_commands(arguments)
+        commands, logfiles_name = get_command_from_arguments(arguments)
 
     job_directory, qsub_directory = create_job_folders(jobname)
 
@@ -92,18 +92,18 @@ def parse_arguments():
     return args
 
 
-def read_commands(fileobj):
+def get_command_from_file(fileobj):
     commands = fileobj.read().split('\n')
     logfiles_name = ['{0}_command_{1}.log'.format(fileobj.name, i) for i in range(len(commands))]
     return commands, logfiles_name
 
 
-def unfold_commands(folded_commands):
+def get_command_from_arguments(arguments):
     commands = ['']
     logfiles_name = ['']
 
     # TODO: Refactor parsing
-    for argument in folded_commands:
+    for argument in arguments:
         commands_tmp = []
         logfiles_name_tmp = []
         for argvalue in argument:
