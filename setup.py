@@ -2,8 +2,9 @@ from distutils.core import setup
 
 setup(
     name='Smart-Dispatch',
-    version='0.0.1',
-    author='Stanislas Lauly',
+    version='0.0.2',
+    author='Stanislas Lauly, Marc-Alexandre Côté, Mathieu Germain',
+    author_email='smart-udes-dev@googlegroups.com',
     packages=['smartDispatch'],
     scripts=['scripts/smartDispatch.py'],
     url='https://github.com/SMART-Lab/smartDispatch',
