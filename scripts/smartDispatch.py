@@ -29,10 +29,10 @@ AVAILABLE_QUEUES = {
 def main():
     args = parse_arguments()
 
-    if args.file is not None:
+    if args.commandsFile is not None:
         # Commands are listed in a file.
-        jobname = args.file.name
-        commands, logfiles_name = get_commands_from_file(args.file)
+        jobname = args.commandsFile.name
+        commands, logfiles_name = get_commands_from_file(args.commandsFile)
     else:
         # Commands that needs to be parsed and unfolded.
         arguments = []
@@ -62,7 +62,7 @@ def main():
         qsub_filenames.append(qsub_filename)
 
     # Launch the jobs with QSUB
-    if not args.doNotLaunchJobs:
+    if not args.doNotLaunch:
         for qsub_filename in qsub_filenames:
             qsub_output = check_output('qsub ' + qsub_filename, shell=True)
             print qsub_output,
@@ -80,7 +80,7 @@ def parse_arguments():
     args = parser.parse_args()
 
     # Check for invalid arguments
-    if args.file is None and len(args.commandAndOptions) < 1:
+    if args.commandsFile is None and len(args.commandAndOptions) < 1:
         parser.error("You need to specify a command to launch.")
     if args.queueName not in AVAILABLE_QUEUES and (args.nbCommandsPerNode is None or args.walltime is None):
         parser.error("Unknown queue, --nbCommandsPerNode and --walltime must be set.")
