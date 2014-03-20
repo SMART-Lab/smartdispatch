@@ -14,7 +14,7 @@ AVAILABLE_QUEUES = {
     'qfat256@mp2': {'coresPerNode': 48, 'maxWalltime': '05:00:00:00'},
     'qfat512@mp2': {'coresPerNode': 48, 'maxWalltime': '02:00:00:00'},
 
-    # Mammouth Série
+    # Mammouth Serie
     'qtest@ms': {'coresPerNode': 8, 'maxWalltime': '00:01:00:00'},
     'qwork@ms': {'coresPerNode': 8, 'maxWalltime': '05:00:00:00'},
     'qlong@ms': {'coresPerNode': 8, 'maxWalltime': '41:16:00:00'},
