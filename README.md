@@ -5,4 +5,4 @@ A batch job launcher for the Mammouth supercomputer.
 `pip install git+https://github.com/SMART-Lab/smartDispatch`
 
 ## Usage
-See `smartDispatch --help`
+See `smartDispatch.py --help`
