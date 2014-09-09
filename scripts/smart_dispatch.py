@@ -7,6 +7,8 @@ import datetime
 import math
 from subprocess import check_output
 
+import smartdispatch.utils as utils
+
 
 AVAILABLE_QUEUES = {
     # Mammouth Parallel
@@ -32,7 +34,7 @@ def main():
     if args.commandsFile is not None:
         # Commands are listed in a file.
         jobname = args.commandsFile.name
-        commands, logfiles_name = get_commands_from_file(args.commandsFile)
+        commands = get_commands_from_file(args.commandsFile)
     else:
         # Commands that needs to be parsed and unfolded.
         arguments = []
@@ -43,9 +45,19 @@ def main():
             arguments += [opt_split]
 
         jobname = generate_name(arguments)
-        commands, logfiles_name = get_commands_from_arguments(arguments)
+        commands = get_commands_from_arguments(arguments)
 
     job_directory, qsub_directory = create_job_folders(jobname)
+
+    # Pool of workers
+    if args.pool is not None:
+        commands_filename = os.path.join(qsub_directory, "commands.txt")
+        with open(commands_filename, 'w') as f:
+            f.write("\n".join(commands))
+
+        worker_command = "smart_worker.py \"{0}\" \"{1}\"".format(commands_filename, job_directory)
+        # Replace commands with `args.pool` workers
+        commands = [worker_command] * args.pool
 
     # Distribute equally the jobs among the QSUB files and generate those files
     nb_commands = len(commands)
@@ -53,12 +65,9 @@ def main():
     nb_commands_per_file = int(math.ceil(nb_commands / float(nb_jobs)))
 
     qsub_filenames = []
-    for i in range(nb_jobs):
-        start = i * nb_commands_per_file
-        end = (i + 1) * nb_commands_per_file
-
+    for i, commands_per_file in enumerate(utils.chunks(commands, n=nb_commands_per_file)):
         qsub_filename = os.path.join(qsub_directory, 'jobCommands_' + str(i) + '.sh')
-        write_qsub_file(commands[start:end], logfiles_name[start:end], qsub_filename, job_directory, args.queueName, args.walltime, os.getcwd(), args.cuda)
+        write_qsub_file(commands_per_file, qsub_filename, job_directory, args.queueName, args.walltime, os.getcwd(), args.cuda)
         qsub_filenames.append(qsub_filename)
 
     # Launch the jobs with QSUB
@@ -76,6 +85,7 @@ def parse_arguments():
     parser.add_argument('-c', '--cuda', action='store_true', help='Load CUDA before executing your code.')
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
+    parser.add_argument('--pool', type=int, help="If specify, tells the number of workers that will consume the commands.")
     parser.add_argument("commandAndOptions", help="Options for the command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
@@ -90,33 +100,26 @@ def parse_arguments():
         args.nbCommandsPerNode = AVAILABLE_QUEUES[args.queueName]['coresPerNode']
     if args.walltime is None:
         args.walltime = AVAILABLE_QUEUES[args.queueName]['maxWalltime']
-    
+
     return args
 
 
 def get_commands_from_file(fileobj):
-    commands = fileobj.read().split('\n')
-    logfiles_name = ['{0}_command_{1}.log'.format(fileobj.name, i) for i in range(len(commands))]
-    return commands, logfiles_name
+    return fileobj.read().split('\n')
 
 
 def get_commands_from_arguments(arguments):
     commands = ['']
-    logfiles_name = ['']
 
     # TODO: Refactor parsing
     for argument in arguments:
         commands_tmp = []
-        logfiles_name_tmp = []
         for argvalue in argument:
-            for job_str, folder_name in zip(commands, logfiles_name):
+            for job_str in commands:
                 commands_tmp += [job_str + argvalue + ' ']
-                argvalue_tmp = argvalue[-30:].split('/')[-1]  # Deal with path as parameter
-                logfiles_name_tmp += [argvalue_tmp] if folder_name == '' else [folder_name + '-' + argvalue_tmp]
         commands = commands_tmp
-        logfiles_name = logfiles_name_tmp
 
-    return commands, logfiles_name
+    return commands
 
 
 def generate_name(arguments, max_length=255):
@@ -145,7 +148,7 @@ def create_job_folders(jobname):
     return path_job_logs, path_job_commands
 
 
-def write_qsub_file(commands, logfiles_name, qsub_filename, job_directory, queue, walltime, current_directory, use_cuda=False):
+def write_qsub_file(commands, qsub_filename, job_directory, queue, walltime, current_directory, use_cuda=False):
     """
     Example of a line for one job for QSUB:
         cd $SRC ; python -u trainAutoEnc2.py 10 80 sigmoid 0.1 vocKL_sarath_german True True > trainAutoEnc2.py-10-80-sigmoid-0.1-vocKL_sarath_german-True-True &
@@ -163,9 +166,10 @@ def write_qsub_file(commands, logfiles_name, qsub_filename, job_directory, queue
 
         qsub_file.write('SRC_DIR_SMART_LAUNCHER=' + current_directory + '\n\n')
 
-        command_template = "cd $SRC_DIR_SMART_LAUNCHER; {0} &> {1} &\n"
-        for command, log_name in zip(commands, logfiles_name):
-            qsub_file.write(command_template.format(command, os.path.join(job_directory, log_name)))
+        command_template = "cd $SRC_DIR_SMART_LAUNCHER; {0} &> \"{1}\" &\n"
+        for command in commands:
+            log_filename = os.path.join(job_directory, utils.generate_name_from_command(command))
+            qsub_file.write(command_template.format(command, log_filename))
 
         qsub_file.write('\nwait\n')
 
