@@ -55,7 +55,7 @@ def main():
         with open(commands_filename, 'w') as f:
             f.write("\n".join(commands))
 
-        worker_command = "smart_worker.py \"{0}\" \"{1}\"".format(commands_filename, job_directory)
+        worker_command = 'smart_worker.py "{0}" "{1}"'.format(commands_filename, job_directory)
         # Replace commands with `args.pool` workers
         commands = [worker_command] * args.pool
 
@@ -85,7 +85,7 @@ def parse_arguments():
     parser.add_argument('-c', '--cuda', action='store_true', help='Load CUDA before executing your code.')
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
-    parser.add_argument('--pool', type=int, help="If specify, tells the number of workers that will consume the commands.")
+    parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
     parser.add_argument("commandAndOptions", help="Options for the command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
@@ -166,7 +166,7 @@ def write_qsub_file(commands, qsub_filename, job_directory, queue, walltime, cur
 
         qsub_file.write('SRC_DIR_SMART_LAUNCHER=' + current_directory + '\n\n')
 
-        command_template = "cd $SRC_DIR_SMART_LAUNCHER; {0} &> \"{1}\" &\n"
+        command_template = 'cd $SRC_DIR_SMART_LAUNCHER; {0} &> "{1}" &\n'
         for command in commands:
             log_filename = os.path.join(job_directory, utils.generate_name_from_command(command))
             qsub_file.write(command_template.format(command, log_filename))

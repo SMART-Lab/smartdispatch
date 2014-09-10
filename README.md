@@ -5,7 +5,7 @@ A batch job launcher for the Mammouth supercomputer.
 `pip install git+https://github.com/SMART-Lab/smartdispatch`
 
 ## Usage
-See `smart_Dispatch.py --help`
+See `smart_dispatch.py --help`
 
 ### Example
 `smart_dispatch.py -q qtest@mp2 python trainAutoEnc2.py "1 2 3 4" 80 sigmoid 0.1`

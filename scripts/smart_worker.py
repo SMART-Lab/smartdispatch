@@ -17,7 +17,7 @@ def parse_arguments():
 
     # Check for invalid arguments
     if not os.path.isfile(args.commands_filename):
-        parser.error("You need to specify the name of the file containing the commands.")
+        parser.error("Invalid file path. Specify path to a file containing commands.")
 
     if not os.path.isdir(args.logs_dir):
         parser.error("You need to specify the folder path where to put command' stdout and stderr.")
@@ -29,7 +29,7 @@ def main():
     args = parse_arguments()
 
     while True:
-        with open(args.commands_filename, 'rw+') as f:
+        with open(args.commands_filename, 'rw+') as commands_file:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             command = f.readline().strip()
             remaining = f.read()
