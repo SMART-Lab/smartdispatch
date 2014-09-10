@@ -29,13 +29,13 @@ def main():
     args = parse_arguments()
 
     while True:
-        with open(args.commands_filename, 'rw+') as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-            command = f.readline().strip()
-            remaining = f.read()
-            f.seek(0, os.SEEK_SET)
-            f.write(remaining)
-            f.truncate()
+        with open(args.commands_filename, 'rw+') as commands_file:
+            fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX)
+            command = commands_file.readline().strip()
+            remaining = commands_file.read()
+            commands_file.seek(0, os.SEEK_SET)
+            commands_file.write(remaining)
+            commands_file.truncate()
 
         if command == '':
             break
@@ -44,13 +44,13 @@ def main():
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 
-        with open(stdout_filename, 'w') as stdout:
-            with open(stderr_filename, 'w') as stderr:
-                stdout.write("# " + command + '\n')
-                stderr.write("# " + command + '\n')
-                stdout.flush()
-                stderr.flush()
-                subprocess.call(command, stdout=stdout, stderr=stderr, shell=True)
+        with open(stdout_filename, 'w') as stdout_file:
+            with open(stderr_filename, 'w') as stderr_file:
+                stdout_file.write("# " + command + '\n')
+                stderr_file.write("# " + command + '\n')
+                stdout_file.flush()
+                stderr_file.flush()
+                subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
 
 
 if __name__ == '__main__':

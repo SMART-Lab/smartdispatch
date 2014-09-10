@@ -10,7 +10,7 @@ def chunks(sequence, n):
 
 def generate_uid_from_command(command):
     """ Create unique identifier from a command. """
-    hasher = hashlib.sha1()
+    hasher = hashlib.sha256()
     hasher.update(command)
     return hasher.hexdigest()
 
