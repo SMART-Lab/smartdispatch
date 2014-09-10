@@ -29,7 +29,7 @@ def main():
     args = parse_arguments()
 
     while True:
-        with open(args.commands_filename, 'rw+') as commands_file:
+        with open(args.commands_filename, 'rw+') as f:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             command = f.readline().strip()
             remaining = f.read()
