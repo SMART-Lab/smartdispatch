@@ -5,6 +5,7 @@ import os
 import fcntl
 import argparse
 import subprocess
+import logging
 
 import smartdispatch.utils as utils
 
@@ -30,7 +31,12 @@ def main():
 
     while True:
         with open(args.commands_filename, 'rw+') as commands_file:
-            fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX)
+            try:
+                fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                logging.info("Can't immediately write-lock the file ({0}), blocking ...".format(args.commands_filename))
+                fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX)
+
             command = commands_file.readline().strip()
             remaining = commands_file.read()
             commands_file.seek(0, os.SEEK_SET)
