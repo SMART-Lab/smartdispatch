@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import smartdispatch.utils as utils
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_array_equal
 
 
@@ -16,9 +16,9 @@ def test_chunks():
         assert_array_equal(list(utils.chunks(sequence, n)), expected, "n:{0}".format(n))
 
 
-def test_generate_uid():
-    for obj in ["string", 42, 21., [1, "2", 3.], {'k': 'v'}]:
-        assert_equal(utils.generate_uid(obj), utils.generate_uid(obj))
+def test_generate_uid_from_text():
+    assert_equal(utils.generate_uid_from_text("same text"), utils.generate_uid_from_text("same text"))
+    assert_true(utils.generate_uid_from_text("same text") != utils.generate_uid_from_text("sametext"))
 
 
 def test_slugify():

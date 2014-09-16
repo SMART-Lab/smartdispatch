@@ -9,15 +9,15 @@ def chunks(sequence, n):
         yield sequence[i:i+n]
 
 
-def generate_uid(obj):
-    """ Create unique identifier from a command. """
-    return hashlib.sha256(repr(obj)).hexdigest()
+def generate_uid_from_text(text):
+    """ Create unique identifier from a string of text. """
+    return hashlib.sha256(text).hexdigest()
 
 
 def slugify(value):
     """
     Converts to lowercase, removes non-word characters (alphanumerics and
-    underscores) and converts spaces to hyphens. Also strips leading and
+    underscores) and converts spaces to underscores. Also strips leading and
     trailing whitespace.
 
     Reference
