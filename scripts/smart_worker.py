@@ -46,7 +46,7 @@ def main():
         if command == '':
             break
 
-        uid = utils.generate_uid_from_command(command)
+        uid = utils.generate_uid_from_string(command)
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 

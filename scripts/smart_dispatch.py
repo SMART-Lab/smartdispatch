@@ -3,7 +3,6 @@
 
 import os
 import argparse
-import datetime
 import math
 from subprocess import check_output
 
@@ -34,18 +33,12 @@ def main():
     if args.commandsFile is not None:
         # Commands are listed in a file.
         jobname = args.commandsFile.name
-        commands = get_commands_from_file(args.commandsFile)
+        commands = utils.get_commands_from_file(args.commandsFile)
     else:
         # Commands that needs to be parsed and unfolded.
-        arguments = []
-        for opt in args.commandAndOptions:
-            opt_split = opt.split()
-            for i, split in enumerate(opt_split):
-                opt_split[i] = os.path.normpath(split)  # If the arg value is a path, remove the final '/' if there is one at the end.
-            arguments += [opt_split]
-
-        jobname = generate_name(arguments)
-        commands = get_commands_from_arguments(arguments)
+        arguments = map(utils.unfold_argument, args.commandAndOptions)
+        jobname = utils.generate_name_from_arguments(arguments)
+        commands = utils.get_commands_from_arguments(arguments)
 
     job_directory, qsub_directory = create_job_folders(jobname)
 
@@ -104,38 +97,6 @@ def parse_arguments():
     return args
 
 
-def get_commands_from_file(fileobj):
-    return fileobj.read().split('\n')
-
-
-def get_commands_from_arguments(arguments):
-    commands = ['']
-
-    # TODO: Refactor parsing
-    for argument in arguments:
-        commands_tmp = []
-        for argvalue in argument:
-            for job_str in commands:
-                commands_tmp += [job_str + argvalue + ' ']
-        commands = commands_tmp
-
-    return commands
-
-
-def generate_name(arguments, max_length=255):
-    # Creating the folder in 'LOGS_QSUB' where the results will be saved
-    name = ''
-    # TODO: Refactor name generator
-    for argument in arguments:
-        argname = argument[0][-30:] + ('' if len(argument) == 1 else ('-' + argument[-1][-30:]))
-        argname = argname.split('/')[-1]  # Deal with path as parameter
-        name += argname if name == '' else ('__' + argname)
-
-    current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    name = current_time + ' ' + name[:max_length-len(current_time)-1]  # No more than 256 character
-    return name
-
-
 def create_job_folders(jobname):
     """Creates the folders where the logs and QSUB files will be saved."""
     path_logs = os.path.join(os.getcwd(), 'LOGS_QSUB')
@@ -148,30 +109,15 @@ def create_job_folders(jobname):
     return path_job_logs, path_job_commands
 
 
-def write_qsub_file(commands, qsub_filename, job_directory, queue, walltime, current_directory, use_cuda=False):
-    """
-    Example of a line for one job for QSUB:
-        cd $SRC ; python -u trainAutoEnc2.py 10 80 sigmoid 0.1 vocKL_sarath_german True True > trainAutoEnc2.py-10-80-sigmoid-0.1-vocKL_sarath_german-True-True &
-    """
-    # Creating the file that will be launch by QSUB
-    with open(qsub_filename, 'w') as qsub_file:
-        qsub_file.write('#!/bin/bash\n')
-        qsub_file.write('#PBS -q ' + queue + '\n')
-        qsub_file.write('#PBS -l nodes=1:ppn=1\n')
-        qsub_file.write('#PBS -V\n')
-        qsub_file.write('#PBS -l walltime=' + walltime + '\n\n')
+def write_qsub_file(commands, pbs_filename, job_directory, queue, walltime, current_directory, use_cuda=False):
+    with open(pbs_filename, 'w') as pbs_file:
 
+        kwargs = {}
         if use_cuda:
-            qsub_file.write('module load cuda\n')
+            kwargs['module'] = ["cuda"]
 
-        qsub_file.write('SRC_DIR_SMART_LAUNCHER=' + current_directory + '\n\n')
-
-        command_template = 'cd $SRC_DIR_SMART_LAUNCHER; {0} &> "{1}" &\n'
-        for command in commands:
-            log_filename = os.path.join(job_directory, utils.generate_name_from_command(command))
-            qsub_file.write(command_template.format(command, log_filename))
-
-        qsub_file.write('\nwait\n')
+        pbs = utils.generate_pbs(commands, queue, walltime, cwd=current_directory, logs_dir=job_directory, **kwargs)
+        pbs_file.write(pbs)
 
 
 if __name__ == "__main__":
