@@ -9,9 +9,9 @@ def chunks(sequence, n):
         yield sequence[i:i+n]
 
 
-def generate_uid_from_text(text):
-    """ Create unique identifier from a string of text. """
-    return hashlib.sha256(text).hexdigest()
+def generate_uid_from_string(value):
+    """ Create unique identifier from a string. """
+    return hashlib.sha256(value).hexdigest()
 
 
 def slugify(value):

@@ -16,9 +16,9 @@ def test_chunks():
         assert_array_equal(list(utils.chunks(sequence, n)), expected, "n:{0}".format(n))
 
 
-def test_generate_uid_from_text():
-    assert_equal(utils.generate_uid_from_text("same text"), utils.generate_uid_from_text("same text"))
-    assert_true(utils.generate_uid_from_text("same text") != utils.generate_uid_from_text("sametext"))
+def test_generate_uid_from_string():
+    assert_equal(utils.generate_uid_from_string("same text"), utils.generate_uid_from_string("same text"))
+    assert_true(utils.generate_uid_from_string("same text") != utils.generate_uid_from_string("sametext"))
 
 
 def test_slugify():
