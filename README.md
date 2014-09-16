@@ -1,6 +1,5 @@
-# Smart Dispatch
 [![Build Status](https://travis-ci.org/SMART-Lab/smartdispatch.png)](https://travis-ci.org/SMART-Lab/smartdispatch)
-
+# Smart Dispatch
 A batch job launcher for the Mammouth supercomputer.
 
 ## Installing
