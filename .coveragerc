@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = smartdispatch
+include = */smartdispatch/*
+omit =
+    */setup.py
