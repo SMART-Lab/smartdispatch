@@ -4,8 +4,12 @@ python:
   #- "3.4"
 
 install:
+  - pip install coveralls
   - pip install .
 
 # command to run tests, e.g. python setup.py test
 script:
-  - nosetests -v
+  - nosetests -v --with-coverage
+
+after_success:
+  - coveralls
