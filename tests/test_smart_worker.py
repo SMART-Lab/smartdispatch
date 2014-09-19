@@ -3,6 +3,7 @@ import unittest
 import tempfile
 import fcntl
 import time
+import shutil
 
 import smartdispatch.utils as utils
 
@@ -21,6 +22,10 @@ class TestSmartWorker(unittest.TestCase):
         self.command_filename = "commands.txt"
         self.command_path = pjoin(self.commands_dir, self.command_filename)
         open(self.command_path, 'w').write("\n".join(self.commands))
+
+    def tearDown(self):
+        shutil.rmtree(self.commands_dir)
+        shutil.rmtree(self.logs_dir)
 
     def test_main(self):
         command = ["smart_worker.py", self.command_path, self.logs_dir]
@@ -71,8 +76,6 @@ class TestSmartWorker(unittest.TestCase):
             time.sleep(0.1)
             fcntl.flock(commands_file.fileno(), fcntl.LOCK_UN)
 
-        print "Removing lock and wait"
         stdout, stderr = process.communicate()
-
         assert_equal(stdout, "")
         assert_true("write-lock" in stderr, msg="Forcing a race condition, try increasing sleeping time above.")
