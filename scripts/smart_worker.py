@@ -27,6 +27,9 @@ def parse_arguments():
 
 
 def main():
+    # Necessary if we want 'logging.info' to appear in stderr.
+    logging.root.setLevel(logging.INFO)
+
     args = parse_arguments()
 
     while True:
