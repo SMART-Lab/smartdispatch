@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+import os
+import time
+import tempfile
+import shutil
+
+from subprocess import Popen, PIPE
+
 import smartdispatch.utils as utils
 
 from nose.tools import assert_equal, assert_true
@@ -30,3 +37,30 @@ def test_slugify():
 
     for arg, expected in testing_arguments:
         assert_equal(utils.slugify(arg), expected)
+
+
+def test_open_and_lock():
+    temp_dir = tempfile.mkdtemp()
+    filename = os.path.join(temp_dir, "testing.lck")
+
+    python_script = os.path.join(temp_dir, "test_lock.py")
+
+    script = ["import logging",
+              "from smartdispatch.utils import open_and_lock",
+              "logging.root.setLevel(logging.INFO)",
+              "with open_and_lock('{0}'): pass".format(filename)]
+
+    open(os.path.join(temp_dir, "test_lock.py"), 'w').write("\n".join(script))
+
+    command = "python " + python_script
+
+    # Lock the commands file before running python command
+    with utils.open_and_lock(filename, 'w'):
+        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+        time.sleep(0.1)
+
+    stdout, stderr = process.communicate()
+    assert_equal(stdout, "")
+    assert_true("write-lock" in stderr, msg="Forcing a race condition, try increasing sleeping time above.")
+
+    shutil.rmtree(temp_dir)
