@@ -4,7 +4,7 @@ import os
 import itertools
 from datetime import datetime
 
-import smartdispatch.utils as utils
+from smartdispatch import utils
 
 
 def generate_name_from_command(command, max_length_arg=None, max_length=None):

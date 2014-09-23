@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import fcntl
 import argparse
 import subprocess
 import logging
 
-import smartdispatch.utils as utils
+from smartdispatch import utils
 
 
 def parse_arguments():
@@ -33,13 +32,7 @@ def main():
     args = parse_arguments()
 
     while True:
-        with open(args.commands_filename, 'rw+') as commands_file:
-            try:
-                fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                logging.info("Can't immediately write-lock the file ({0}), blocking ...".format(args.commands_filename))
-                fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX)
-
+        with utils.open_with_lock(args.commands_filename, 'rw+') as commands_file:
             command = commands_file.readline().strip()
             remaining = commands_file.read()
             commands_file.seek(0, os.SEEK_SET)
