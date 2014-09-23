@@ -34,7 +34,7 @@ def slugify(value):
 
 
 @contextmanager
-def open_and_lock(*args, **kwargs):
+def open_with_lock(*args, **kwargs):
     """ Context manager for opening file with an exclusive lock. """
     f = open(*args, **kwargs)
     try:

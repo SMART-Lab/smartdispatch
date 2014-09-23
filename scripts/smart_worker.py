@@ -32,7 +32,7 @@ def main():
     args = parse_arguments()
 
     while True:
-        with utils.open_and_lock(args.commands_filename, 'rw+') as commands_file:
+        with utils.open_with_lock(args.commands_filename, 'rw+') as commands_file:
             command = commands_file.readline().strip()
             remaining = commands_file.read()
             commands_file.seek(0, os.SEEK_SET)

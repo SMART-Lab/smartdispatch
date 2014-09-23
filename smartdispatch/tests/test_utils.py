@@ -39,23 +39,23 @@ def test_slugify():
         assert_equal(utils.slugify(arg), expected)
 
 
-def test_open_and_lock():
+def test_open_with_lock():
     temp_dir = tempfile.mkdtemp()
     filename = os.path.join(temp_dir, "testing.lck")
 
     python_script = os.path.join(temp_dir, "test_lock.py")
 
     script = ["import logging",
-              "from smartdispatch.utils import open_and_lock",
+              "from smartdispatch.utils import open_with_lock",
               "logging.root.setLevel(logging.INFO)",
-              "with open_and_lock('{0}'): pass".format(filename)]
+              "with open_with_lock('{0}'): pass".format(filename)]
 
     open(os.path.join(temp_dir, "test_lock.py"), 'w').write("\n".join(script))
 
     command = "python " + python_script
 
     # Lock the commands file before running python command
-    with utils.open_and_lock(filename, 'w'):
+    with utils.open_with_lock(filename, 'w'):
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
         time.sleep(0.1)
 
