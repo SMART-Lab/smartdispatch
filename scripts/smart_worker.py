@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import fcntl
 import argparse
 import subprocess
 import logging
 
-import smartdispatch.utils as utils
+from smartdispatch import utils
 
 
 def parse_arguments():

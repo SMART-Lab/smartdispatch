@@ -6,7 +6,7 @@ import shutil
 
 from subprocess import Popen, PIPE
 
-import smartdispatch.utils as utils
+from smartdispatch import utils
 
 from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_array_equal
