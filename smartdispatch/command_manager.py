@@ -42,7 +42,7 @@ class CommandManager(object):
                 self._move_line_between_files(running_commands_file, finished_commands_file, command + '\n')
 
     def reset_running_commands(self):
-        if os.isfile(self._running_commands_filename):
+        if os.path.isfile(self._running_commands_filename):
             with utils.open_with_lock(self._commands_filename, 'r+') as commands_file:
                 with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
                     commands = running_commands_file.readlines()
