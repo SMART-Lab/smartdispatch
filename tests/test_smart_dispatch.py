@@ -27,7 +27,7 @@ class TestSmartdispatcher(unittest.TestCase):
         # Test validation
         assert_equal(exit_status, 0)
         assert_true(os.path.isdir(self.logs_dir))
-        assert_equal(len(os.listdir(os.path.isdir(self.logs_dir))), 1)
+        assert_equal(len(os.listdir(self.logs_dir)), 1)
 
     def test_main_resume(self):
         # SetUp
@@ -42,4 +42,4 @@ class TestSmartdispatcher(unittest.TestCase):
         # Test validation
         assert_equal(exit_status, 0)
         assert_true(os.path.isdir(self.logs_dir))
-        assert_equal(len(os.listdir(os.path.isdir(self.logs_dir))), 1)
+        assert_equal(len(os.listdir(self.logs_dir)), 1)
