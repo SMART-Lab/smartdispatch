@@ -6,7 +6,8 @@ import argparse
 import subprocess
 import logging
 
-from smartdispatch import utils, command_manager
+from smartdispatch import utils
+from smartdispatch.command_manager import CommandManager
 
 
 def parse_arguments():
@@ -31,17 +32,10 @@ def main():
 
     args = parse_arguments()
 
-    base_path, filename = os.path.split(args.commands_filename)
-    running_commands_filename = os.path.join(base_path, "running_" + filename)
-    finished_commands_filename = os.path.join(base_path, "finished_" + filename)
+    command_manager = CommandManager(args.commands_filename)
 
     while True:
-        with utils.open_with_lock(args.commands_filename, 'rw+') as commands_file:
-            command = commands_file.readline().strip()
-            remaining = commands_file.read()
-            commands_file.seek(0, os.SEEK_SET)
-            commands_file.write(remaining)
-            commands_file.truncate()
+        command = command_manager.get_command_to_run()
 
         if command == '':
             break
@@ -57,13 +51,9 @@ def main():
                 stdout_file.flush()
                 stderr_file.flush()
 
-                # Moving the current command to the currently running command file
-                command_manager.append_command_to_file(running_commands_filename, command)
-
                 subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
 
-        # Removing the sucessfully ran command and putting it in the finished command
-        command_manager.move_running_command_to_finished(running_commands_filename, finished_commands_filename, command)
+        command_manager.set_running_command_as_finished(command)
 
 if __name__ == '__main__':
     main()
