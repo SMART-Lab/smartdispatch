@@ -25,6 +25,21 @@ class CommandFilesTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self._base_dir)
 
+    def test_set_commands_to_run(self):
+        # SetUp
+        commands = ["4", "5\n", "6"]
+
+        # The function to test
+        self.command_manager.set_commands_to_run(commands)
+
+        # Test validation
+        with open(self.command_manager._commands_filename, "r") as commands_file:
+            assert_equal(commands_file.read(), self.command1 + self.command2 + self.command3 + "4\n5\n6\n")
+
+        assert_true(not os.path.isfile(self.command_manager._running_commands_filename))
+
+        assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
+
     def test_get_command_to_run(self):
         # The function to test
         command = self.command_manager.get_command_to_run()

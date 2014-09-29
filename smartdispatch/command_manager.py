@@ -22,6 +22,11 @@ class CommandManager(object):
 
         file2.write(line)
 
+    def set_commands_to_run(self, commands):
+        with utils.open_with_lock(self._commands_filename, 'a') as commands_file:
+            commands = [command.strip() + '\n' for command in commands]
+            commands_file.writelines(commands)
+
     def get_command_to_run(self):
         with utils.open_with_lock(self._commands_filename, 'r+') as commands_file:
             with utils.open_with_lock(self._running_commands_filename, 'a') as running_commands_file:
