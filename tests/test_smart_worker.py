@@ -5,7 +5,7 @@ import fcntl
 import time
 import shutil
 
-import smartdispatch.utils as utils
+from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
 
 from subprocess import Popen, call, PIPE

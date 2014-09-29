@@ -6,8 +6,10 @@ import argparse
 import math
 from subprocess import check_output
 
-import smartdispatch.utils as utils
+from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
+
+import smartdispatch
 
 
 AVAILABLE_QUEUES = {
@@ -34,12 +36,12 @@ def main():
     if args.commandsFile is not None:
         # Commands are listed in a file.
         jobname = args.commandsFile.name
-        commands = utils.get_commands_from_file(args.commandsFile)
+        commands = smartdispatch.get_commands_from_file(args.commandsFile)
     else:
         # Commands that needs to be parsed and unfolded.
-        arguments = map(utils.unfold_argument, args.commandAndOptions)
-        jobname = utils.generate_name_from_arguments(arguments)
-        commands = utils.get_commands_from_arguments(arguments)
+        arguments = map(smartdispatch.unfold_argument, args.commandAndOptions)
+        jobname = smartdispatch.generate_name_from_arguments(arguments)
+        commands = smartdispatch.get_commands_from_arguments(arguments)
 
     job_directory, qsub_directory = create_job_folders(jobname)
 
@@ -98,13 +100,17 @@ def parse_arguments():
 
 
 def create_job_folders(jobname):
-    """Creates the folders where the logs and QSUB files will be saved."""
-    path_logs = os.path.join(os.getcwd(), 'LOGS_QSUB')
-    path_job_logs = os.path.join(path_logs, jobname)
-    path_job_commands = os.path.join(path_job_logs, 'QSUB_commands')
+    """Creates the folders where the logs, commands and QSUB files will be saved."""
+    path_smartdispatch_logs = os.path.join(os.getcwd(), 'SMART_DISPATCH_LOGS')
+    path_job = os.path.join(path_smartdispatch_logs, jobname)
+    path_job_logs = os.path.join(path_job, 'logs')
+    path_job_commands = os.path.join(path_job, 'commands')
 
     if not os.path.exists(path_job_commands):
         os.makedirs(path_job_commands)
+
+    if not os.path.exists(path_job_logs):
+        os.makedirs(path_job_logs)
 
     return path_job_logs, path_job_commands
 
@@ -116,7 +122,7 @@ def write_qsub_file(commands, pbs_filename, job_directory, queue, walltime, curr
         if use_cuda:
             kwargs['module'] = ["cuda"]
 
-        pbs = utils.generate_pbs(commands, queue, walltime, cwd=current_directory, logs_dir=job_directory, **kwargs)
+        pbs = smartdispatch.generate_pbs(commands, queue, walltime, cwd=current_directory, logs_dir=job_directory, **kwargs)
         pbs_file.write(pbs)
 
 

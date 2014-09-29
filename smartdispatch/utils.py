@@ -3,6 +3,7 @@ import fcntl
 import logging
 import hashlib
 import unicodedata
+import json
 
 from contextlib import contextmanager
 
@@ -10,7 +11,7 @@ from contextlib import contextmanager
 def chunks(sequence, n):
     """ Yield successive n-sized chunks from sequence. """
     for i in xrange(0, len(sequence), n):
-        yield sequence[i:i+n]
+        yield sequence[i:i + n]
 
 
 def generate_uid_from_string(value):
@@ -45,3 +46,13 @@ def open_with_lock(*args, **kwargs):
     yield f
     fcntl.flock(f.fileno(), fcntl.LOCK_UN)
     f.close()
+
+
+def save_dict_to_json_file(path, dictionary):
+    with open(path, "w") as json_file:
+        json_file.write(json.dumps(dictionary, indent=4, separators=(',', ': ')))
+
+
+def load_dict_from_json_file(path):
+    with open(path, "r") as json_file:
+        return json.loads(json_file.read())
