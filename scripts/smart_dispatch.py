@@ -9,6 +9,7 @@ from subprocess import check_output
 from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
 
+from smartdispatch.pbs_generator import PBSGenerator
 import smartdispatch
 
 
@@ -35,6 +36,8 @@ AVAILABLE_QUEUES = {
 def main():
     args = parse_arguments()
 
+    #TODO: Use config and queue to fill pbs options
+    pbs = PBSGenerator(queue=args.queueName, walltime=args.walltime)
     # Check if RESUME or LAUNCH mode
     if args.mode == "launch":
         if args.commandsFile is not None:
@@ -49,9 +52,9 @@ def main():
 
         commands = smartdispatch.replace_uid_tag(commands)
 
-        job_directory, qsub_directory = create_job_folders(jobname)
+        path_job_logs, path_job_commands = create_job_folders(jobname)
     else:
-        job_directory, qsub_directory = get_job_folders(args.batch_uid)
+        path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
 
     # Pool of workers
     if args.pool is not None:
@@ -63,9 +66,15 @@ def main():
         else:
             command_manager.reset_running_commands()
 
-        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, job_directory)
+        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
         # Replace commands with `args.pool` workers
         commands = [worker_command] * args.pool
+
+    # Add redirect for output and error logs
+    for i, command in enumerate(commands):
+        log_filename = os.path.join(path_job_logs, smartdispatch.generate_name_from_command(command, max_length_arg=30))
+        commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
+        commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
     # Distribute equally the jobs among the QSUB files and generate those files
     nb_commands = len(commands)
@@ -74,8 +83,10 @@ def main():
 
     qsub_filenames = []
     for i, commands_per_file in enumerate(utils.chunks(commands, n=nb_commands_per_file)):
-        qsub_filename = os.path.join(qsub_directory, 'jobCommands_' + str(i) + '.sh')
-        write_qsub_file(commands_per_file, qsub_filename, job_directory, args.queueName, args.walltime, os.getcwd(), args.cuda)
+        qsub_filename = os.path.join(path_job_commands, 'job_commands_' + str(i) + '.sh')
+        pbs.add_commands(*commands_per_file)
+        pbs.save(qsub_filename)
+        pbs.clear_commands()
         qsub_filenames.append(qsub_filename)
 
     # Launch the jobs with QSUB
@@ -155,17 +166,6 @@ def create_job_folders(jobname):
         os.makedirs(path_job_logs)
 
     return path_job_logs, path_job_commands
-
-
-def write_qsub_file(commands, pbs_filename, job_directory, queue, walltime, current_directory, use_cuda=False):
-    with open(pbs_filename, 'w') as pbs_file:
-
-        kwargs = {}
-        if use_cuda:
-            kwargs['module'] = ["cuda"]
-
-        pbs = smartdispatch.generate_pbs(commands, queue, walltime, cwd=current_directory, logs_dir=job_directory, **kwargs)
-        pbs_file.write(pbs)
 
 
 if __name__ == "__main__":
