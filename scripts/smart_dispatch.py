@@ -126,7 +126,7 @@ def get_job_folders(jobname):
     path_job_commands = os.path.join(path_job, 'commands')
 
     if not os.path.exists(path_job_commands) or not os.path.exists(path_job_logs):
-        raise BaseException("Job does not exist!")
+        raise BaseException("Job ({}) does not exist!".format(jobname))
 
     return path_job_logs, path_job_commands
 

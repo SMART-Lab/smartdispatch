@@ -33,7 +33,7 @@ class TestSmartdispatcher(unittest.TestCase):
         # SetUp
         command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x launch echo "1 2 3"'
         call(command, shell=True)
-        batch_uid = os.listdir(self.testing_dir)[0]
+        batch_uid = os.listdir(self.logs_dir)[0]
 
         # Actual test
         command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x resume {0}'.format(batch_uid)
