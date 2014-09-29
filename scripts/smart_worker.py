@@ -37,7 +37,7 @@ def main():
     while True:
         command = command_manager.get_command_to_run()
 
-        if command == '':
+        if command is None:
             break
 
         uid = utils.generate_uid_from_string(command)

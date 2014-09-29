@@ -31,6 +31,8 @@ class CommandManager(object):
         with utils.open_with_lock(self._commands_filename, 'r+') as commands_file:
             with utils.open_with_lock(self._running_commands_filename, 'a') as running_commands_file:
                 command = commands_file.readline()
+                if command == '':
+                    return None
                 self._move_line_between_files(commands_file, running_commands_file, command)
         return command
 
