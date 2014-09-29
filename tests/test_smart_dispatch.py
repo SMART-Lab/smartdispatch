@@ -16,7 +16,7 @@ class TestSmartdispatcher(unittest.TestCase):
 
         base_command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x {0}'
         self.launch_command = base_command.format('launch echo "1 2 3 4" "6 7 8" "9 0"')
-        self.resume_command = base_command.format('resume {{0}}')
+        self.resume_command = base_command.format('resume {0}')
 
         os.chdir(self.testing_dir)
 
