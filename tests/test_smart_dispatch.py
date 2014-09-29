@@ -14,6 +14,10 @@ class TestSmartdispatcher(unittest.TestCase):
         self.testing_dir = tempfile.mkdtemp()
         self.logs_dir = os.path.join(self.testing_dir, 'SMART_DISPATCH_LOGS')
 
+        base_command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x {0}'
+        self.launch_command = base_command.format('launch echo "1 2 3 4" "6 7 8" "9 0"')
+        self.resume_command = base_command.format('resume {{0}}')
+
         os.chdir(self.testing_dir)
 
     def tearDown(self):
@@ -21,8 +25,7 @@ class TestSmartdispatcher(unittest.TestCase):
 
     def test_main_launch(self):
         # Actual test
-        command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x launch echo "1 2 3 4" "6 7 8" "9 0"'
-        exit_status = call(command, shell=True)
+        exit_status = call(self.launch_command, shell=True)
 
         # Test validation
         assert_equal(exit_status, 0)
@@ -31,13 +34,11 @@ class TestSmartdispatcher(unittest.TestCase):
 
     def test_main_resume(self):
         # SetUp
-        command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x launch echo "1 2 3"'
-        call(command, shell=True)
+        call(self.launch_command, shell=True)
         batch_uid = os.listdir(self.logs_dir)[0]
 
         # Actual test
-        command = 'smart_dispatch.py --pool 10 -q qtest@mp2 -n 5 -x resume {0}'.format(batch_uid)
-        exit_status = call(command, shell=True)
+        exit_status = call(self.resume_command.format(batch_uid), shell=True)
 
         # Test validation
         assert_equal(exit_status, 0)
