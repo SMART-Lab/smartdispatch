@@ -14,7 +14,7 @@ class CommandFilesTests(unittest.TestCase):
         self.command1 = "1\n"
         self.command2 = "2\n"
         self.command3 = "3\n"
-        print self._base_dir
+
         command_filename = os.path.join(self._base_dir, "commant.txt")
 
         with open(command_filename, "w+") as commands_file:
@@ -27,7 +27,7 @@ class CommandFilesTests(unittest.TestCase):
 
     def test_set_commands_to_run(self):
         # SetUp
-        commands = ["4", "5\n", "6"]
+        commands = ["4", "5", "6"]
 
         # The function to test
         self.command_manager.set_commands_to_run(commands)
@@ -45,7 +45,7 @@ class CommandFilesTests(unittest.TestCase):
         command = self.command_manager.get_command_to_run()
 
         # Test validation
-        assert_equal(command, self.command1)
+        assert_equal(command, self.command1.strip())
 
         with open(self.command_manager._commands_filename, "r") as commands_file:
             assert_equal(commands_file.read(), self.command2 + self.command3)
