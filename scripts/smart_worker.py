@@ -7,6 +7,7 @@ import subprocess
 import logging
 
 from smartdispatch import utils
+from smartdispatch.command_manager import CommandManager
 
 
 def parse_arguments():
@@ -31,15 +32,12 @@ def main():
 
     args = parse_arguments()
 
-    while True:
-        with utils.open_with_lock(args.commands_filename, 'rw+') as commands_file:
-            command = commands_file.readline().strip()
-            remaining = commands_file.read()
-            commands_file.seek(0, os.SEEK_SET)
-            commands_file.write(remaining)
-            commands_file.truncate()
+    command_manager = CommandManager(args.commands_filename)
 
-        if command == '':
+    while True:
+        command = command_manager.get_command_to_run()
+
+        if command is None:
             break
 
         uid = utils.generate_uid_from_string(command)
@@ -52,8 +50,10 @@ def main():
                 stderr_file.write("# " + command + '\n')
                 stdout_file.flush()
                 stderr_file.flush()
+
                 subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
 
+        command_manager.set_running_command_as_finished(command)
 
 if __name__ == '__main__':
     main()

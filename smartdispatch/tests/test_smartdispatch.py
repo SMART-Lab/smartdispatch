@@ -85,9 +85,9 @@ def test_get_commands_from_arguments():
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1 args2"])
 
     args = [["args1_a", "args1_b", "args1_c"], ["args2_a", "args2_b"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1_a args2_a" , "args1_a args2_b",
-                                                                   "args1_b args2_a" , "args1_b args2_b",
-                                                                   "args1_c args2_a" , "args1_c args2_b"])
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1_a args2_a", "args1_a args2_b",
+                                                                   "args1_b args2_a", "args1_b args2_b",
+                                                                   "args1_c args2_a", "args1_c args2_b"])
 
 
 def test_unfold_argument():

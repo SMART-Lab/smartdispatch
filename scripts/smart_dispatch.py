@@ -7,6 +7,7 @@ import math
 from subprocess import check_output
 
 import smartdispatch.utils as utils
+from smartdispatch.command_manager import CommandManager
 
 
 AVAILABLE_QUEUES = {
@@ -44,11 +45,10 @@ def main():
 
     # Pool of workers
     if args.pool is not None:
-        commands_filename = os.path.join(qsub_directory, "commands.txt")
-        with open(commands_filename, 'w') as f:
-            f.write("\n".join(commands))
+        command_manager = CommandManager(os.path.join(qsub_directory, "commands.txt"))
+        command_manager.set_commands_to_run(commands)
 
-        worker_command = 'smart_worker.py "{0}" "{1}"'.format(commands_filename, job_directory)
+        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, job_directory)
         # Replace commands with `args.pool` workers
         commands = [worker_command] * args.pool
 
