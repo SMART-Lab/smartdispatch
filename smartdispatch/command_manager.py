@@ -24,7 +24,7 @@ class CommandManager(object):
 
     def set_commands_to_run(self, commands):
         with utils.open_with_lock(self._commands_filename, 'a') as commands_file:
-            commands = [command.strip() + '\n' for command in commands]
+            commands = [command + '\n' for command in commands]
             commands_file.writelines(commands)
 
     def get_command_to_run(self):
@@ -34,9 +34,9 @@ class CommandManager(object):
                 if command == '':
                     return None
                 self._move_line_between_files(commands_file, running_commands_file, command)
-        return command
+        return command[:-1]
 
     def set_running_command_as_finished(self, command):
         with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
             with utils.open_with_lock(self._finished_commands_filename, 'a') as finished_commands_file:
-                self._move_line_between_files(running_commands_file, finished_commands_file, command)
+                self._move_line_between_files(running_commands_file, finished_commands_file, command + '\n')
