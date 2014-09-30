@@ -71,3 +71,19 @@ class CommandFilesTests(unittest.TestCase):
 
         with open(self.command_manager._finished_commands_filename, "r") as finished_commands_file:
             assert_equal(finished_commands_file.read(), self.command1)
+
+    def test_reset_running_commands(self):
+        # SetUp
+        self.command_manager.get_command_to_run()
+
+        # The function to test
+        self.command_manager.reset_running_commands()
+
+        # Test validation
+        with open(self.command_manager._commands_filename, "r") as commands_file:
+            assert_equal(commands_file.read(), self.command1 + self.command2 + self.command3)
+
+        with open(self.command_manager._running_commands_filename, "r") as running_commands_file:
+            assert_equal(running_commands_file.read(), "")
+
+        assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))

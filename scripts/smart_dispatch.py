@@ -12,6 +12,8 @@ from smartdispatch.command_manager import CommandManager
 import smartdispatch
 
 
+LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
+
 AVAILABLE_QUEUES = {
     # Mammouth Parallel
     'qtest@mp2': {'coresPerNode': 24, 'maxWalltime': '00:01:00:00'},
@@ -33,25 +35,33 @@ AVAILABLE_QUEUES = {
 def main():
     args = parse_arguments()
 
-    if args.commandsFile is not None:
-        # Commands are listed in a file.
-        jobname = args.commandsFile.name
-        commands = smartdispatch.get_commands_from_file(args.commandsFile)
+    # Check if RESUME or LAUNCH mode
+    if args.mode == "launch":
+        if args.commandsFile is not None:
+            # Commands are listed in a file.
+            jobname = args.commandsFile.name
+            commands = smartdispatch.get_commands_from_file(args.commandsFile)
+        else:
+            # Commands that needs to be parsed and unfolded.
+            arguments = map(smartdispatch.unfold_argument, args.commandAndOptions)
+            jobname = smartdispatch.generate_name_from_arguments(arguments)
+            commands = smartdispatch.get_commands_from_arguments(arguments)
+
+        commands = smartdispatch.replace_uid_tag(commands)
+
+        job_directory, qsub_directory = create_job_folders(jobname)
     else:
-        # Commands that needs to be parsed and unfolded.
-        arguments = map(smartdispatch.unfold_argument, args.commandAndOptions)
-        jobname = smartdispatch.generate_name_from_arguments(arguments)
-        commands = smartdispatch.get_commands_from_arguments(arguments)
-
-    #Check for {UID} tag, if found replace with the command's uid.
-    commands = smartdispatch.replace_uid_tag(commands)
-
-    job_directory, qsub_directory = create_job_folders(jobname)
+        job_directory, qsub_directory = get_job_folders(args.batch_uid)
 
     # Pool of workers
     if args.pool is not None:
         command_manager = CommandManager(os.path.join(qsub_directory, "commands.txt"))
-        command_manager.set_commands_to_run(commands)
+
+        # If resume mode, reset running jobs
+        if args.mode == "launch":
+            command_manager.set_commands_to_run(commands)
+        else:
+            command_manager.reset_running_commands()
 
         worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, job_directory)
         # Replace commands with `args.pool` workers
@@ -84,14 +94,25 @@ def parse_arguments():
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
     parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
-    parser.add_argument("commandAndOptions", help="Options for the command", nargs=argparse.REMAINDER)
+    subparsers = parser.add_subparsers(dest="mode")
+
+    launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
+    launch_parser.add_argument("commandAndOptions", help="Options for the commands.", nargs=argparse.REMAINDER)
+
+    resume_parser = subparsers.add_parser('resume', help="Resume jobs from batch UID.")
+    resume_parser.add_argument("batch_uid", help="Batch UID of the jobs to resume.")
+
     args = parser.parse_args()
 
-    # Check for invalid arguments
-    if args.commandsFile is None and len(args.commandAndOptions) < 1:
-        parser.error("You need to specify a command to launch.")
-    if args.queueName not in AVAILABLE_QUEUES and (args.nbCommandsPerNode is None or args.walltime is None):
-        parser.error("Unknown queue, --nbCommandsPerNode and --walltime must be set.")
+    # Check for invalid arguments in
+    if args.mode == "launch":
+        if args.commandsFile is None and len(args.commandAndOptions) < 1:
+            parser.error("You need to specify a command to launch.")
+        if args.queueName not in AVAILABLE_QUEUES and (args.nbCommandsPerNode is None or args.walltime is None):
+            parser.error("Unknown queue, --nbCommandsPerNode and --walltime must be set.")
+    else:
+        if args.pool is None:
+            resume_parser.error("The resume feature only works with the --pool argument.")
 
     # Set queue defaults for non specified params
     if args.nbCommandsPerNode is None:
@@ -102,12 +123,30 @@ def parse_arguments():
     return args
 
 
-def create_job_folders(jobname):
-    """Creates the folders where the logs, commands and QSUB files will be saved."""
-    path_smartdispatch_logs = os.path.join(os.getcwd(), 'SMART_DISPATCH_LOGS')
+def _gen_job_paths(jobname):
+    path_smartdispatch_logs = os.path.join(os.getcwd(), LOGS_FOLDERNAME)
     path_job = os.path.join(path_smartdispatch_logs, jobname)
     path_job_logs = os.path.join(path_job, 'logs')
     path_job_commands = os.path.join(path_job, 'commands')
+
+    return path_job_logs, path_job_commands
+
+
+def get_job_folders(jobname):
+    path_job_logs, path_job_commands = _gen_job_paths(jobname)
+
+    if not os.path.exists(path_job_commands):
+        raise LookupError("Batch UID ({0}) does not exist! Cannot resume.".format(jobname))
+
+    if not os.path.exists(path_job_logs):
+        os.makedirs(path_job_logs)
+
+    return path_job_logs, path_job_commands
+
+
+def create_job_folders(jobname):
+    """Creates the folders where the logs, commands and QSUB files will be saved."""
+    path_job_logs, path_job_commands = _gen_job_paths(jobname)
 
     if not os.path.exists(path_job_commands):
         os.makedirs(path_job_commands)
