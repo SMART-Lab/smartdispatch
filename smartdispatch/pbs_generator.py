@@ -80,3 +80,39 @@ class PBSGenerator:
         pbs += self.get_commands_section() + "\n"
         pbs += "\nwait"
         return pbs
+
+
+class Guillimin_PBSGenerator(PBSGenerator):
+    ''' Generates the header content of a PBS file used by the command qsub.
+
+    Parameters
+    ----------
+    queue : str
+        name of the queue on which commands will be excuted
+    walltime : str
+        maximum time allocated to execute every commands (DD:HH:MM:SS)
+    nodes : int
+        number of nodes needed (default: 1)
+    ppn: int
+        number of cpus needed (default: 1)
+    gpus : int
+        number of gpus needed (default: 0)
+    modules : list of str
+        list of modules to load prior executing commands (default: [])
+    cwd : str
+            current working directory where commands will be executed (default: os.getcwd())
+    '''
+    def __init__(self, queue, walltime, nodes=1, ppn=1, gpus=0, modules=[], cwd=os.getcwd()):
+        PBSGenerator.__init__(self, queue, walltime, nodes, ppn, gpus, modules, cwd)
+
+        CUDA_MODULE = "CUDAToolkit/6.0"
+        if self.queue == "k20":
+            if CUDA_MODULE not in self.modules:
+                self.modules.append(CUDA_MODULE)
+
+        self.account_name = os.path.split(os.getenv('HOME_GROUP'))[-1]
+
+    def get_header(self):
+        pbs = PBSGenerator.get_header(self)
+        pbs += "#PBS -A " + self.account_name
+        return pbs

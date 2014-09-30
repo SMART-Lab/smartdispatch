@@ -1,0 +1,66 @@
+{
+    "qtest@ms": {
+        "ram": 16,
+        "modules": [],
+        "cores": 8,
+        "max_walltime": "00:01:00:00",
+        "gpus": 0,
+        "nodes": 5
+    },
+    "qfat512@mp2": {
+        "ram": 512,
+        "modules": [],
+        "cpus": 48,
+        "max_walltime": "02:00:00:00",
+        "gpus": 0,
+        "nodes": 2
+    },
+    "qtest@mp2": {
+        "ram": 32,
+        "modules": [],
+        "cpus": 24,
+        "max_walltime": "00:01:00:00",
+        "gpus": 0,
+        "nodes": 4
+    },
+    "qwork@mp2": {
+        "ram": 32,
+        "modules": [],
+        "cpus": 24,
+        "max_walltime": "05:00:00:00",
+        "gpus": 0,
+        "nodes": 2057
+    },
+    "qlong@ms": {
+        "ram": 16,
+        "modules": [],
+        "cores": 8,
+        "max_walltime": "41:16:00:00",
+        "gpus": 0,
+        "nodes": 5
+    },
+    "qfbb@mp2": {
+        "ram": 32,
+        "modules": [],
+        "cpus": 288,
+        "max_walltime": "05:00:00:00",
+        "gpus": 0,
+        "nodes": 216
+    },
+    "qfat256@mp2": {
+        "ram": 256,
+        "modules": [],
+        "cpus": 48,
+        "max_walltime": "05:00:00:00",
+        "gpus": 0,
+        "nodes": 20
+    },
+    "qwork@ms": {
+        "ram": 16,
+        "modules": [],
+        "cores": 8,
+        "max_walltime": "05:00:00:00",
+        "gpus": 0,
+        "nodes": 305
+    }
+}

@@ -11,26 +11,15 @@ from smartdispatch.command_manager import CommandManager
 
 from smartdispatch.pbs_generator import PBSGenerator
 import smartdispatch
-
-
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
-AVAILABLE_QUEUES = {
-    # Mammouth Parallel
-    'qtest@mp2': {'coresPerNode': 24, 'maxWalltime': '00:01:00:00'},
-    'qwork@mp2': {'coresPerNode': 24, 'maxWalltime': '05:00:00:00'},
-    'qfbb@mp2': {'coresPerNode': 288, 'maxWalltime': '05:00:00:00'},
-    'qfat256@mp2': {'coresPerNode': 48, 'maxWalltime': '05:00:00:00'},
-    'qfat512@mp2': {'coresPerNode': 48, 'maxWalltime': '02:00:00:00'},
+# Load all available queues from config files (Mammouth and Guillimin)
+smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
+config_dir = os.path.join(smartdispatch_dir, '../config')
+config_files = [os.path.join(config_dir, config_file) for config_file in os.listdir(config_dir)]
+configs = map(utils.load_dict_from_json_file, config_files)
 
-    # Mammouth Série
-    'qtest@ms': {'coresPerNode': 8, 'maxWalltime': '00:01:00:00'},
-    'qwork@ms': {'coresPerNode': 8, 'maxWalltime': '05:00:00:00'},
-    'qlong@ms': {'coresPerNode': 8, 'maxWalltime': '41:16:00:00'},
-
-    # Mammouth GPU
-    # 'qwork@brume' : {'coresPerNode' : 0, 'maxWalltime' : '05:00:00:00'} # coresPerNode is variable and not relevant for this queue
-}
+AVAILABLE_QUEUES = {name: info for queue in configs for name, info in queue.items()}
 
 
 def main():
@@ -58,7 +47,7 @@ def main():
 
     # Pool of workers
     if args.pool is not None:
-        command_manager = CommandManager(os.path.join(qsub_directory, "commands.txt"))
+        command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
 
         # If resume mode, reset running jobs
         if args.mode == "launch":
@@ -127,9 +116,9 @@ def parse_arguments():
 
     # Set queue defaults for non specified params
     if args.nbCommandsPerNode is None:
-        args.nbCommandsPerNode = AVAILABLE_QUEUES[args.queueName]['coresPerNode']
+        args.nbCommandsPerNode = AVAILABLE_QUEUES[args.queueName]['cpus']
     if args.walltime is None:
-        args.walltime = AVAILABLE_QUEUES[args.queueName]['maxWalltime']
+        args.walltime = AVAILABLE_QUEUES[args.queueName]['max_walltime']
 
     return args
 

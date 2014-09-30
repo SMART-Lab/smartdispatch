@@ -1,0 +1,10 @@
+{
+    "k20": {
+        "ram": 64,
+        "modules": [],
+        "cores": 16,
+        "max_walltime": "30:00:00:00",
+        "gpus": 2,
+        "nodes": 25
+    }
+}
