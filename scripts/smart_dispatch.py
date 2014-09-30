@@ -34,7 +34,7 @@ def main():
     args = parse_arguments()
 
     # Check if RESUME or LAUNCH mode
-    if hasattr(args, 'commandAndOptions'):
+    if args.mode == "launch":
         if args.commandsFile is not None:
             # Commands are listed in a file.
             jobname = args.commandsFile.name
@@ -54,10 +54,10 @@ def main():
         command_manager = CommandManager(os.path.join(qsub_directory, "commands.txt"))
 
         # If resume mode, reset running jobs
-        if hasattr(args, 'batch_uid'):
-            command_manager.reset_running_commands()
-        else:
+        if args.mode == "launch":
             command_manager.set_commands_to_run(commands)
+        else:
+            command_manager.reset_running_commands()
 
         worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, job_directory)
         # Replace commands with `args.pool` workers
@@ -90,24 +90,25 @@ def parse_arguments():
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
     parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch batch jobs.")
     launch_parser.add_argument("commandAndOptions", help="Options for the commands.", nargs=argparse.REMAINDER)
 
     resume_parser = subparsers.add_parser('resume', help="Resume batch jobs from UID.")
-    resume_parser.add_argument("batch_uid", help="UID of the batch ro resume.")
+    resume_parser.add_argument("batch_uid", help="UID of the batch to resume.")
 
     args = parser.parse_args()
-
+    print args
+    exit()
     # Check for invalid arguments in
-    if hasattr(args, 'commandAndOptions'):
+    if args.mode == "launch":
         if args.commandsFile is None and len(args.commandAndOptions) < 1:
             parser.error("You need to specify a command to launch.")
         if args.queueName not in AVAILABLE_QUEUES and (args.nbCommandsPerNode is None or args.walltime is None):
             parser.error("Unknown queue, --nbCommandsPerNode and --walltime must be set.")
     else:
-        if not hasattr(args, 'pool'):
+        if args.pool is None:
             resume_parser.error("The resume feature only works with the --pool argument.")
 
     # Set queue defaults for non specified params
