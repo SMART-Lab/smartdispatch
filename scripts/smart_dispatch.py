@@ -12,6 +12,8 @@ from smartdispatch.command_manager import CommandManager
 import smartdispatch
 
 
+LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
+
 AVAILABLE_QUEUES = {
     # Mammouth Parallel
     'qtest@mp2': {'coresPerNode': 24, 'maxWalltime': '00:01:00:00'},
@@ -92,15 +94,14 @@ def parse_arguments():
     parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
     subparsers = parser.add_subparsers(dest="mode")
 
-    launch_parser = subparsers.add_parser('launch', help="Launch batch jobs.")
+    launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
     launch_parser.add_argument("commandAndOptions", help="Options for the commands.", nargs=argparse.REMAINDER)
 
-    resume_parser = subparsers.add_parser('resume', help="Resume batch jobs from UID.")
-    resume_parser.add_argument("batch_uid", help="UID of the batch to resume.")
+    resume_parser = subparsers.add_parser('resume', help="Resume jobs from batch UID.")
+    resume_parser.add_argument("batch_uid", help="Batch UID of the jobs to resume.")
 
     args = parser.parse_args()
-    print args
-    exit()
+
     # Check for invalid arguments in
     if args.mode == "launch":
         if args.commandsFile is None and len(args.commandAndOptions) < 1:
@@ -120,24 +121,30 @@ def parse_arguments():
     return args
 
 
-def get_job_folders(jobname):
-    path_smartdispatch_logs = os.path.join(os.getcwd(), 'SMART_DISPATCH_LOGS')
+def _gen_job_paths(jobname):
+    path_smartdispatch_logs = os.path.join(os.getcwd(), LOGS_FOLDERNAME)
     path_job = os.path.join(path_smartdispatch_logs, jobname)
     path_job_logs = os.path.join(path_job, 'logs')
     path_job_commands = os.path.join(path_job, 'commands')
 
-    if not os.path.exists(path_job_commands) or not os.path.exists(path_job_logs):
-        raise BaseException("Job ({}) does not exist!".format(jobname))
+    return path_job_logs, path_job_commands
+
+
+def get_job_folders(jobname):
+    path_job_logs, path_job_commands = _gen_job_paths(jobname)
+
+    if not os.path.exists(path_job_commands):
+        raise LookupError("Batch UID ({0}) does not exist! Cannot resume.".format(jobname))
+
+    if not os.path.exists(path_job_logs):
+        os.makedirs(path_job_logs)
 
     return path_job_logs, path_job_commands
 
 
 def create_job_folders(jobname):
     """Creates the folders where the logs, commands and QSUB files will be saved."""
-    path_smartdispatch_logs = os.path.join(os.getcwd(), 'SMART_DISPATCH_LOGS')
-    path_job = os.path.join(path_smartdispatch_logs, jobname)
-    path_job_logs = os.path.join(path_job, 'logs')
-    path_job_commands = os.path.join(path_job, 'commands')
+    path_job_logs, path_job_commands = _gen_job_paths(jobname)
 
     if not os.path.exists(path_job_commands):
         os.makedirs(path_job_commands)
