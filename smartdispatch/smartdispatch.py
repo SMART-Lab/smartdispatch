@@ -6,6 +6,8 @@ from datetime import datetime
 
 from smartdispatch import utils
 
+UID_TAG = "{UID}"
+
 
 def generate_name_from_command(command, max_length_arg=None, max_length=None):
     ''' Generates name from a given command.
@@ -139,6 +141,10 @@ def unfold_argument(argument):
 
     # Suppose `argument`is a space separated list
     return argument.split(" ")
+
+
+def replace_uid_tag(commands):
+    return [command.replace("{UID}", utils.generate_uid_from_string(command)) for command in commands]
 
 
 def generate_pbs(commands, queue, walltime, cwd='.', logs_dir='.', **kwargs):

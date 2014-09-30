@@ -4,6 +4,7 @@ from StringIO import StringIO
 from nose.tools import assert_true, assert_equal
 from numpy.testing import assert_array_equal
 from datetime import datetime
+from smartdispatch import utils
 
 
 def test_generate_name_from_command():
@@ -102,6 +103,23 @@ def test_unfold_argument():
     # Test list (comma)
     for arg in ["[arg1 arg2]", "[subarg11 subarg12, arg2]", "[arg1, arg2]", "[arg1, ]", "[ ,arg1]"]:
         assert_array_equal(smartdispatch.unfold_argument(arg), arg[1:-1].split(","))
+
+
+def test_replace_uid_tag():
+    command = "command without uid tag"
+    assert_array_equal(smartdispatch.replace_uid_tag([command]), [command])
+
+    command = "command with one {UID} tag"
+    uid = utils.generate_uid_from_string(command)
+    assert_array_equal(smartdispatch.replace_uid_tag([command]), [command.replace("{UID}", uid)])
+
+    command = "command with two {UID} tag {UID}"
+    uid = utils.generate_uid_from_string(command)
+    assert_array_equal(smartdispatch.replace_uid_tag([command]), [command.replace("{UID}", uid)])
+
+    commands = ["a command with a {UID} tag"] * 10
+    uid = utils.generate_uid_from_string(commands[0])
+    assert_array_equal(smartdispatch.replace_uid_tag(commands), [commands[0].replace("{UID}", uid)]*len(commands))
 
 
 def test_generate_pbs():

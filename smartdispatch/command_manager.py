@@ -1,5 +1,5 @@
 import os
-from smartdispatch import utils
+# from smartdispatch import utils
 
 
 class CommandManager(object):
@@ -23,13 +23,13 @@ class CommandManager(object):
         file2.write(line)
 
     def set_commands_to_run(self, commands):
-        with utils.open_with_lock(self._commands_filename, 'a') as commands_file:
+        with open(self._commands_filename, 'a') as commands_file:
             commands = [command + '\n' for command in commands]
             commands_file.writelines(commands)
 
     def get_command_to_run(self):
-        with utils.open_with_lock(self._commands_filename, 'r+') as commands_file:
-            with utils.open_with_lock(self._running_commands_filename, 'a') as running_commands_file:
+        with open(self._commands_filename, 'r+') as commands_file:
+            with open(self._running_commands_filename, 'a') as running_commands_file:
                 command = commands_file.readline()
                 if command == '':
                     return None
@@ -37,14 +37,14 @@ class CommandManager(object):
         return command[:-1]
 
     def set_running_command_as_finished(self, command):
-        with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
-            with utils.open_with_lock(self._finished_commands_filename, 'a') as finished_commands_file:
+        with open(self._running_commands_filename, 'r+') as running_commands_file:
+            with open(self._finished_commands_filename, 'a') as finished_commands_file:
                 self._move_line_between_files(running_commands_file, finished_commands_file, command + '\n')
 
     def reset_running_commands(self):
         if os.path.isfile(self._running_commands_filename):
-            with utils.open_with_lock(self._commands_filename, 'r+') as commands_file:
-                with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
+            with open(self._commands_filename, 'r+') as commands_file:
+                with open(self._running_commands_filename, 'r+') as running_commands_file:
                     commands = running_commands_file.readlines()
                     if len(commands) > 0:
                         running_commands_file.seek(0, os.SEEK_SET)
