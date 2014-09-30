@@ -47,6 +47,8 @@ def main():
             jobname = smartdispatch.generate_name_from_arguments(arguments)
             commands = smartdispatch.get_commands_from_arguments(arguments)
 
+        commands = smartdispatch.replace_uid_tag(commands)
+
         job_directory, qsub_directory = create_job_folders(jobname)
     else:
         job_directory, qsub_directory = get_job_folders(args.batch_uid)
