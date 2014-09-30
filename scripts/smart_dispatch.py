@@ -43,6 +43,9 @@ def main():
         jobname = smartdispatch.generate_name_from_arguments(arguments)
         commands = smartdispatch.get_commands_from_arguments(arguments)
 
+    #Check for {UID} tag, if found replace with the command's uid.
+    commands = smartdispatch.replace_uid_tag(commands)
+
     job_directory, qsub_directory = create_job_folders(jobname)
 
     # Pool of workers
