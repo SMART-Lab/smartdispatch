@@ -18,9 +18,11 @@ class TestSmartdispatcher(unittest.TestCase):
         self.launch_command = base_command.format('launch echo "1 2 3 4" "6 7 8" "9 0"')
         self.resume_command = base_command.format('resume {0}')
 
+        self._cwd = os.getcwd()
         os.chdir(self.testing_dir)
 
     def tearDown(self):
+        os.chdir(self._cwd)
         shutil.rmtree(self.testing_dir)
 
     def test_main_launch(self):
