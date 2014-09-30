@@ -2,7 +2,7 @@
 from distutils.core import setup
 
 setup(
-    name='Smart-Dispatch',
+    name='smartdispatch',
     version='0.0.5',
     author='Stanislas Lauly, Marc-Alexandre Côté, Mathieu Germain',
     author_email='smart-udes-dev@googlegroups.com',
@@ -13,5 +13,5 @@ setup(
     description='A batch job launcher for the Mammouth supercomputer.',
     long_description=open('README.txt').read(),
     install_requires=[],
-    data_files=[('config', ['config/mammouth.json', 'config/guillimin.json'])]
+    package_data={'smartdispatch': ['config/*.json']}
 )

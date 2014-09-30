@@ -15,7 +15,8 @@ LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
 # Load all available queues from config files (Mammouth and Guillimin)
 smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
-config_dir = os.path.join(smartdispatch_dir, '../config')
+print smartdispatch_dir
+config_dir = os.path.join(smartdispatch_dir, 'config')
 config_files = [os.path.join(config_dir, config_file) for config_file in os.listdir(config_dir)]
 configs = map(utils.load_dict_from_json_file, config_files)
 
