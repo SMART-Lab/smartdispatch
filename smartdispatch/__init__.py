@@ -5,3 +5,4 @@ from smartdispatch.smartdispatch import unfold_argument
 from smartdispatch.smartdispatch import get_commands_from_file
 from smartdispatch.smartdispatch import get_commands_from_arguments
 from smartdispatch.smartdispatch import generate_pbs
+from smartdispatch.smartdispatch import replace_uid_tag
