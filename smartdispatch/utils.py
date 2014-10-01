@@ -5,6 +5,7 @@ import hashlib
 import unicodedata
 import json
 
+from subprocess import Popen, PIPE
 from contextlib import contextmanager
 
 
@@ -56,3 +57,17 @@ def save_dict_to_json_file(path, dictionary):
 def load_dict_from_json_file(path):
     with open(path, "r") as json_file:
         return json.loads(json_file.read())
+
+
+def detect_cluster():
+    # Get server status
+    output = Popen(["qstat", "-B"], stdout=PIPE).communicate()[0]
+    # Get server name from status
+    server_name = output.split('\n')[2].split(' ')[0]
+    # Cleanup the name and return it
+    cluster_name = None
+    if server_name.split('.')[-1] == 'm':
+        cluster_name = "mammouth"
+    elif server_name.split('.')[-1] == 'guil':
+        cluster_name = "guillimin"
+    return cluster_name
