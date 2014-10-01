@@ -6,11 +6,12 @@ from smartdispatch import utils
 
 def pbs_generator_factory():
     cluster_name = utils.detect_cluster()
-    if cluster_name == "Mammouth":
+    if cluster_name == "mammouth":
         return PBSGeneratorMammouth
-    elif cluster_name == "Guillimin":
+    elif cluster_name == "guillimin":
         return PBSGeneratorGuillimin
 
+    print "Unknown cluster, using generic PBD generator."
     return PBSGenerator
 
 
