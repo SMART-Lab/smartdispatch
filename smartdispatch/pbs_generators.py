@@ -118,16 +118,16 @@ class PBSGeneratorMammouth(PBSGenerator):
         # Gather information from config file when possible
         if queue in infos:
             if walltime is None:
-                walltime = infos['max_walltime']
+                walltime = infos[queue]['max_walltime']
 
             if cores is None:
-                cores = infos['cores']
+                cores = infos[queue]['cores']
 
             if gpus is None:
-                gpus = infos['gpus']
+                gpus = infos[queue]['gpus']
 
             if modules is None:
-                modules = infos['modules']
+                modules = infos[queue]['modules']
 
         PBSGenerator.__init__(self, commands, nb_cores_per_command, queue, walltime, cores, gpus, modules, cwd)
 
@@ -141,16 +141,16 @@ class PBSGeneratorGuillimin(PBSGenerator):
         # Gather information from config file when possible
         if queue in infos:
             if walltime is None:
-                walltime = infos['max_walltime']
+                walltime = infos[queue]['max_walltime']
 
             if cores is None:
-                cores = infos['cores']
+                cores = infos[queue]['cores']
 
             if gpus is None:
-                gpus = infos['gpus']
+                gpus = infos[queue]['gpus']
 
             if modules is None:
-                modules = infos['modules']
+                modules = infos[queue]['modules']
 
         PBSGenerator.__init__(self, commands, nb_cores_per_command, queue, walltime, cores, gpus, modules, cwd)
 
