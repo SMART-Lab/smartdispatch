@@ -3,13 +3,13 @@
 
 import os
 import argparse
-import math
 from subprocess import check_output
 
 from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
 
-from smartdispatch.pbs_generator import PBSGenerator
+from smartdispatch.pbs_generators import pbs_generator_factory
+
 import smartdispatch
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
@@ -26,8 +26,6 @@ AVAILABLE_QUEUES = {name: info for queue in configs for name, info in queue.item
 def main():
     args = parse_arguments()
 
-    #TODO: Use config and queue to fill pbs options
-    pbs = PBSGenerator(queue=args.queueName, walltime=args.walltime)
     # Check if RESUME or LAUNCH mode
     if args.mode == "launch":
         if args.commandsFile is not None:
@@ -66,23 +64,14 @@ def main():
         commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
-    # Distribute equally the jobs among the QSUB files and generate those files
-    nb_commands = len(commands)
-    nb_jobs = int(math.ceil(nb_commands / float(args.nbCommandsPerNode)))
-    nb_commands_per_file = int(math.ceil(nb_commands / float(nb_jobs)))
-
-    qsub_filenames = []
-    for i, commands_per_file in enumerate(utils.chunks(commands, n=nb_commands_per_file)):
-        qsub_filename = os.path.join(path_job_commands, 'job_commands_' + str(i) + '.sh')
-        pbs.add_commands(*commands_per_file)
-        pbs.save(qsub_filename)
-        pbs.clear_commands()
-        qsub_filenames.append(qsub_filename)
+    pbs_generator = pbs_generator_factory()
+    pbs_generator(commands, args.nbCoresPerCommand, queue=args.queue, walltime=args.walltime, cores=args.cores, gpus=args.gpus, modules=None)
+    pbs_filenames = pbs_generator.save_files()
 
     # Launch the jobs with QSUB
     if not args.doNotLaunch:
-        for qsub_filename in qsub_filenames:
-            qsub_output = check_output('qsub ' + qsub_filename, shell=True)
+        for pbs_filename in pbs_filenames:
+            qsub_output = check_output('qsub ' + pbs_filename, shell=True)
             print qsub_output,
 
 
@@ -90,8 +79,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
-    parser.add_argument('-n', '--nbCommandsPerNode', type=int, required=False, help='Set the number of commands per nodes.')
-    parser.add_argument('-c', '--cuda', action='store_true', help='Load CUDA before executing your code.')
+    parser.add_argument('-n', '--nbCoresPerCommand', type=int, required=False, help='Set the number of cores per command.')
+    parser.add_argument('-c', '--cores', type=int, required=False, help='Specify how many cores there are per node.')
+    parser.add_argument('-g', '--gpus', type=int, required=False, help='Specify how many gpus there are per node.')
+    #parser.add_argument('-m', '--modules', type=str, required=False, help='Specify .', nargs='+')
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
     parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
@@ -109,17 +100,11 @@ def parse_arguments():
     if args.mode == "launch":
         if args.commandsFile is None and len(args.commandAndOptions) < 1:
             parser.error("You need to specify a command to launch.")
-        if args.queueName not in AVAILABLE_QUEUES and (args.nbCommandsPerNode is None or args.walltime is None):
-            parser.error("Unknown queue, --nbCommandsPerNode and --walltime must be set.")
+        if args.queueName not in AVAILABLE_QUEUES and (args.cores is None or args.walltime is None):
+            parser.error("Unknown queue, --cores and --walltime must be set.")
     else:
         if args.pool is None:
             resume_parser.error("The resume feature only works with the --pool argument.")
-
-    # Set queue defaults for non specified params
-    if args.nbCommandsPerNode is None:
-        args.nbCommandsPerNode = AVAILABLE_QUEUES[args.queueName]['cpus']
-    if args.walltime is None:
-        args.walltime = AVAILABLE_QUEUES[args.queueName]['max_walltime']
 
     return args
 
