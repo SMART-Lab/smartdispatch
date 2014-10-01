@@ -156,7 +156,7 @@ class PBSGeneratorGuillimin(PBSGenerator):
 
         self.account_name = os.path.split(os.getenv('HOME_GROUP'))[-1]
 
-    def get_header(self):
-        pbs = PBSGenerator.get_header(self)
+    def get_header(self, commands):
+        pbs = PBSGenerator.get_header(self, commands)
         pbs += "#PBS -A " + self.account_name
         return pbs
