@@ -61,7 +61,11 @@ def load_dict_from_json_file(path):
 
 def detect_cluster():
     # Get server status
-    output = Popen(["qstat", "-B"], stdout=PIPE).communicate()[0]
+    try:
+        output = Popen(["qstat", "-B"], stdout=PIPE).communicate()[0]
+    except OSError:
+        # If qstat is not available we assume that the cluster is unknown.
+        return None
     # Get server name from status
     server_name = output.split('\n')[2].split(' ')[0]
     # Cleanup the name and return it
