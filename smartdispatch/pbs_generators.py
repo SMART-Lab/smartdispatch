@@ -49,6 +49,9 @@ class PBSGenerator:
         self.nb_commands_per_node = min(len(self.commands)*self.nb_cores_per_command, self.cores//self.nb_cores_per_command)
         self.nb_nodes = int(math.ceil(len(self.commands) / float(self.nb_commands_per_node)))
 
+        if self.gpus is not None:
+            self.nb_commands_per_node = min(len(self.commands)*self.nb_cores_per_command, self.gpus//self.nb_cores_per_command)
+
     def _load_config(self, configname):
         smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
         config_dir = os.path.join(smartdispatch_dir, 'config')
