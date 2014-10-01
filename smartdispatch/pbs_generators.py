@@ -43,7 +43,7 @@ class PBSGenerator:
         self.modules = modules
         self.cwd = cwd
         self.commands = commands
-        self.nb_cores_per_command
+        self.nb_cores_per_command = nb_cores_per_command
 
         self.nb_commands_per_node = min(len(self.commands)*self.nb_cores_per_command, self.cores//self.nb_cores_per_command)
         self.nb_nodes = int(math.ceil(len(self.commands) / float(self.nb_commands_per_node)))
@@ -53,7 +53,7 @@ class PBSGenerator:
         config_dir = os.path.join(smartdispatch_dir, 'config')
         return utils.load_dict_from_json_file(os.path.join(config_dir, configname))
 
-    def save_pbs(self, pbs_dir):
+    def save_to_files(self, pbs_dir):
         pbs_filenames = []
 
         # Distribute equally the jobs among the PBS files and generate those files
@@ -75,7 +75,7 @@ class PBSGenerator:
 
         pbs += ["#PBS -l walltime=" + self.walltime]
 
-        ppn = len(commands) * self.cores_per_command
+        ppn = len(commands) * self.nb_cores_per_command
         pbs += ["#PBS -l nodes=1:ppn={ppn}".format(ppn=ppn)]
 
         if self.gpus > 0:
@@ -85,8 +85,9 @@ class PBSGenerator:
 
     def get_modules_section(self):
         pbs = ["\n# Modules #"]
-        for module in self.modules:
-            pbs += ["module load " + module]
+        if self.modules is not None:
+            for module in self.modules:
+                pbs += ["module load " + module]
 
         return "\n".join(pbs)
 
@@ -110,7 +111,7 @@ class PBSGenerator:
 class PBSGeneratorMammouth(PBSGenerator):
     configname = "mammouth.json"
 
-    def __init__(self, commands, queue, walltime=None, cores=None, gpus=None, modules=None, cwd=os.getcwd()):
+    def __init__(self, commands, nb_cores_per_command, queue, walltime=None, cores=None, gpus=None, modules=None, cwd=os.getcwd()):
         infos = self._load_config(self.configname)
 
         # Gather information from config file when possible
@@ -127,13 +128,13 @@ class PBSGeneratorMammouth(PBSGenerator):
             if modules is None:
                 modules = infos['modules']
 
-        PBSGenerator.__init__(self, commands, queue, walltime, cores, gpus, modules, cwd)
+        PBSGenerator.__init__(self, commands, nb_cores_per_command, queue, walltime, cores, gpus, modules, cwd)
 
 
 class PBSGeneratorGuillimin(PBSGenerator):
     configname = "guillimin.json"
 
-    def __init__(self, commands, queue, walltime=None, cores=None, gpus=None, modules=None, cwd=os.getcwd()):
+    def __init__(self, commands, queue, nb_cores_per_command, walltime=None, cores=None, gpus=None, modules=None, cwd=os.getcwd()):
         infos = self._load_config(self.configname)
 
         # Gather information from config file when possible
@@ -150,7 +151,7 @@ class PBSGeneratorGuillimin(PBSGenerator):
             if modules is None:
                 modules = infos['modules']
 
-        PBSGenerator.__init__(self, commands, queue, walltime, cores, gpus, modules, cwd)
+        PBSGenerator.__init__(self, commands, nb_cores_per_command, queue, walltime, cores, gpus, modules, cwd)
 
         self.account_name = os.path.split(os.getenv('HOME_GROUP'))[-1]
 

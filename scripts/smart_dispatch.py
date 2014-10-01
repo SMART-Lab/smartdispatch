@@ -15,7 +15,6 @@ LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
 # Load all available queues from config files (Mammouth and Guillimin)
 smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
-print smartdispatch_dir
 config_dir = os.path.join(smartdispatch_dir, 'config')
 config_files = [os.path.join(config_dir, config_file) for config_file in os.listdir(config_dir)]
 configs = map(utils.load_dict_from_json_file, config_files)
@@ -65,8 +64,8 @@ def main():
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
     pbs_generator = pbs_generator_factory()
-    pbs_generator(commands, args.nbCoresPerCommand, queue=args.queue, walltime=args.walltime, cores=args.cores, gpus=args.gpus, modules=None)
-    pbs_filenames = pbs_generator.save_files()
+    pbs = pbs_generator(commands, args.nbCoresPerCommand, queue=args.queueName, walltime=args.walltime, cores=args.cores, gpus=args.gpus, modules=None)
+    pbs_filenames = pbs.save_to_files(path_job_commands)
 
     # Launch the jobs with QSUB
     if not args.doNotLaunch:
@@ -79,7 +78,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
-    parser.add_argument('-n', '--nbCoresPerCommand', type=int, required=False, help='Set the number of cores per command.')
+    parser.add_argument('-n', '--nbCoresPerCommand', type=int, required=False, help='Set the number of cores per command.', default=1)
     parser.add_argument('-c', '--cores', type=int, required=False, help='Specify how many cores there are per node.')
     parser.add_argument('-g', '--gpus', type=int, required=False, help='Specify how many gpus there are per node.')
     #parser.add_argument('-m', '--modules', type=str, required=False, help='Specify .', nargs='+')
