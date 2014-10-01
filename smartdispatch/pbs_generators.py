@@ -79,7 +79,7 @@ class PBSGenerator:
         ppn = len(commands) * self.nb_cores_per_command
         pbs += ["#PBS -l nodes=1:ppn={ppn}".format(ppn=ppn)]
 
-        if self.gpus > 0:
+        if self.gpus is not None:
             pbs[-1] += ":gpus=" + str(ppn)
 
         return "\n".join(pbs)
@@ -135,7 +135,7 @@ class PBSGeneratorMammouth(PBSGenerator):
 class PBSGeneratorGuillimin(PBSGenerator):
     configname = "guillimin.json"
 
-    def __init__(self, commands, queue, nb_cores_per_command, walltime=None, cores=None, gpus=None, modules=None, cwd=os.getcwd()):
+    def __init__(self, commands, nb_cores_per_command, queue, walltime=None, cores=None, gpus=None, modules=None, cwd=os.getcwd()):
         infos = self._load_config(self.configname)
 
         # Gather information from config file when possible
