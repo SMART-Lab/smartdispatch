@@ -43,5 +43,5 @@
         "cores": 16,
         "max_walltime": "7:00:00:00",
         "min_ppn": 1
-    },
+    }
 }
