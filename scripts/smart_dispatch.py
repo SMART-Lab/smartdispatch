@@ -5,24 +5,23 @@ import os
 import argparse
 from subprocess import check_output
 
-from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
 
-from smartdispatch.pbs_generators import pbs_generator_factory
+from smartdispatch.cluster import queue_factory, get_known_queues
+from smartdispatch.pbs import write_pbs_to_files
 
+import logging
 import smartdispatch
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
-# Load all available queues from config files (Mammouth and Guillimin)
-smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
-config_dir = os.path.join(smartdispatch_dir, 'config')
-config_files = [os.path.join(config_dir, config_file) for config_file in os.listdir(config_dir)]
-configs = map(utils.load_dict_from_json_file, config_files)
 
-AVAILABLE_QUEUES = {name: info for queue in configs for name, info in queue.items()}
+AVAILABLE_QUEUES = get_known_queues()
 
 
 def main():
+    # Necessary if we want 'logging.info' to appear in stderr.
+    logging.root.setLevel(logging.INFO)
+
     args = parse_arguments()
 
     # Check if RESUME or LAUNCH mode
@@ -63,9 +62,9 @@ def main():
         commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
-    pbs_generator = pbs_generator_factory()
-    pbs = pbs_generator(commands, args.nbCoresPerCommand, queue=args.queueName, walltime=args.walltime, cores=args.cores, gpus=args.gpus, modules=None)
-    pbs_filenames = pbs.save_to_files(path_job_commands)
+    queue = queue_factory(name=args.queueName, walltime=args.walltime, cores=args.cores, gpus=args.gpus, modules=[])
+    pbs_list = queue.generate_pbs(commands, nb_cores_per_command=args.nbCoresPerCommand, mem_per_command=0)
+    pbs_filenames = write_pbs_to_files(pbs_list, path_job_commands)
 
     # Launch the jobs with QSUB
     if not args.doNotLaunch:

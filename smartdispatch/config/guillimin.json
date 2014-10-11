@@ -26,11 +26,21 @@
         "max_walltime": "30:00:00:00",
         "min_ppn": 1
     },
-    "lm": {
+    "lm256": {
+        "queue_name": "lm",
         "ram": 72,
         "cores": 12,
         "max_walltime": "30:00:00:00",
-        "min_ppn": 1
+        "min_ppn": 1,
+        "cores_extra_infos": ":256"
+    },
+    "lm512": {
+        "queue_name": "lm",
+        "ram": 72,
+        "cores": 12,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1,
+        "cores_extra_infos": ":512"
     },
     "lm2": {
         "ram": 128,
