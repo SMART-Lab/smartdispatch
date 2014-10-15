@@ -132,12 +132,7 @@ def unfold_argument(argument):
     Complex arguments
     -----------------
     *list (space)*: "item1 item2 ... itemN"
-    *list (comma)*: "[item1,item2,...,itemN]"
     '''
-
-    # Check if `argument` is a comma separated list (may contain spaces)
-    if argument[0] == "[" and argument[-1] == "]":
-        return argument[1:-1].split(",")
 
     # Suppose `argument`is a space separated list
     return argument.split(" ")

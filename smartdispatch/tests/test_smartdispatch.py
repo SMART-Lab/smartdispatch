@@ -100,10 +100,6 @@ def test_unfold_argument():
     for arg in ["arg1 arg2", "arg1 ", " arg1"]:
         assert_array_equal(smartdispatch.unfold_argument(arg), arg.split(" "))
 
-    # Test list (comma)
-    for arg in ["[arg1 arg2]", "[subarg11 subarg12, arg2]", "[arg1, arg2]", "[arg1, ]", "[ ,arg1]"]:
-        assert_array_equal(smartdispatch.unfold_argument(arg), arg[1:-1].split(","))
-
 
 def test_replace_uid_tag():
     command = "command without uid tag"
