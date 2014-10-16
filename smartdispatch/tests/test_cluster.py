@@ -18,10 +18,12 @@ class TestQueue(unittest.TestCase):
         self.name = "qtest@mp2"
         self.walltime = "10:00"
         self.cores = 42
-        self.gpus = 0
         self.modules = ["cuda", "python"]
 
-        self.queue = Queue(self.name, self.walltime, self.cores, self.gpus, self.modules)
+        self.queue = Queue(self.name, self.walltime, self.cores, 0, self.modules)
+
+        self.gpus = 42
+        self.queue_gpu = Queue(self.name, self.walltime, self.cores, self.gpus, self.modules)
 
     def tearDown(self):
         shutil.rmtree(self.testing_dir)
@@ -29,6 +31,7 @@ class TestQueue(unittest.TestCase):
     def test_generate_pbs(self):
         commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
 
+        # Test nb_cores_per_command argument
         # Should needs one PBS file
         pbs_list = self.queue.generate_pbs(commands)
         assert_equal(len(pbs_list), 1)
@@ -46,14 +49,26 @@ class TestQueue(unittest.TestCase):
         assert_equal(len(pbs_list), 4)
         assert_equal([pbs.commands[0] for pbs in pbs_list], commands)
 
-        # If queue has gpus it should be specified in PBS resource `nodes`
+        # Since queue has no gpus it should not be specified in PBS resource `nodes`
         assert_true('gpus' not in pbs_list[0].resources['nodes'])
 
-        queue = copy.copy(self.queue)
-        queue.gpus = 2
-        pbs_list = queue.generate_pbs(commands)
+        # Test nb_gpus_per_command argument
+        # Should needs two PBS file
+        nb_gpus_per_command = self.gpus // 2
+        pbs_list = self.queue_gpu.generate_pbs(commands, 1, nb_gpus_per_command)
+        assert_equal(len(pbs_list), 2)
+        assert_equal(pbs_list[0].commands, commands[:2])
+        assert_equal(pbs_list[1].commands, commands[2:])
+
+        # Should needs four PBS file
+        pbs_list = self.queue_gpu.generate_pbs(commands, nb_gpus_per_command=self.gpus)
+        assert_equal(len(pbs_list), 4)
+        assert_equal([pbs.commands[0] for pbs in pbs_list], commands)
+
+        # Since queue has gpus it should be specified in PBS resource `nodes`
         assert_true('gpus' in pbs_list[0].resources['nodes'])
 
+        # Test modules to load
         # Check if needed modules for this queue are included in the PBS file
         assert_equal(pbs_list[0].modules, self.modules)
 

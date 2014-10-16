@@ -43,8 +43,7 @@ class PBS:
         self.options = {}
         self.add_options(q=queue_name)
 
-        # Declares that all environment variables in the qsub command's
-        #  environment are to be exported to the batch job.
+        # Declares that all environment variables in the qsub command's environment are to be exported to the batch job.
         self.add_options(V="")
 
     def add_options(self, **options):

@@ -62,8 +62,8 @@ def main():
         commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
-    queue = queue_factory(name=args.queueName, walltime=args.walltime, cores=args.cores, gpus=args.gpus, modules=[])
-    pbs_list = queue.generate_pbs(commands, nb_cores_per_command=args.nbCoresPerCommand, mem_per_command=0)
+    queue = queue_factory(name=args.queueName, walltime=args.walltime, cores=args.coresPerNode, gpus=args.gpusPerNode, modules=args.modules)
+    pbs_list = queue.generate_pbs(commands, nb_cores_per_command=args.coresPerCommand, nb_gpus_per_command=args.gpusPerCommand, mem_per_command=0)
     pbs_filenames = write_pbs_to_files(pbs_list, path_job_commands)
 
     # Launch the jobs with QSUB
@@ -77,13 +77,19 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
-    parser.add_argument('-n', '--nbCoresPerCommand', type=int, required=False, help='Set the number of cores per command.', default=1)
-    parser.add_argument('-c', '--cores', type=int, required=False, help='Specify how many cores there are per node.')
-    parser.add_argument('-g', '--gpus', type=int, required=False, help='Specify how many gpus there are per node.')
-    #parser.add_argument('-m', '--modules', type=str, required=False, help='Specify .', nargs='+')
-    parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
+    parser.add_argument('-C', '--coresPerNode', type=int, required=False, help='How many cores there are per node.')
+    parser.add_argument('-G', '--gpusPerNode', type=int, required=False, help='How many gpus there are per node.')
+    #parser.add_argument('-M', '--memPerNode', type=int, required=False, help='How much memory there are per node (in Gb).')
+
+    parser.add_argument('-c', '--coresPerCommand', type=int, required=False, help='How many cores a command needs.', default=1)
+    parser.add_argument('-g', '--gpusPerCommand', type=int, required=False, help='How many gpus a command needs.', default=1)
+    #parser.add_argument('-m', '--memPerCommand', type=float, required=False, help='How much memory a command needs (in Gb).')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
-    parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
+
+    parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
+    parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
+
+    parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands.")
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
@@ -98,8 +104,8 @@ def parse_arguments():
     if args.mode == "launch":
         if args.commandsFile is None and len(args.commandAndOptions) < 1:
             parser.error("You need to specify a command to launch.")
-        if args.queueName not in AVAILABLE_QUEUES and (args.cores is None or args.walltime is None):
-            parser.error("Unknown queue, --cores and --walltime must be set.")
+        if args.queueName not in AVAILABLE_QUEUES and ((args.coresPerNode is None and args.gpusPerNode is None) or args.walltime is None):
+            parser.error("Unknown queue, --coresPerCommand/--gpusPerCommand and --walltime must be set.")
     else:
         if args.pool is None:
             resume_parser.error("The resume feature only works with the --pool argument.")

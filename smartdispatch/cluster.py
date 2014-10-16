@@ -86,7 +86,7 @@ class Queue:
         self.gpus = 0 if gpus is None else gpus
         self.modules = [] if modules is None else modules
 
-    def generate_pbs(self, commands, nb_cores_per_command=1, mem_per_command=0):
+    def generate_pbs(self, commands, nb_cores_per_command=1, nb_gpus_per_command=1, mem_per_command=0):
         """ Generates PBS objects allowing the execution of every commands on this queue.
 
         Parameters
@@ -96,10 +96,12 @@ class Queue:
         nb_cores_per_command : int
             number of cores needed to execute a single command
         mem_per_command : int
-            number of memory (RAM) needed to execute a single command (in bytes)
+            number of memory (RAM) needed to execute a single command (in Gb)
         """
-        cores = self.gpus if self.gpus > 0 else self.cores
-        nb_commands_per_node = min(len(commands)*nb_cores_per_command, cores//nb_cores_per_command)
+        nb_commands_per_node = self.cores//nb_cores_per_command
+
+        if self.gpus > 0 and nb_gpus_per_command > 0:
+            nb_commands_per_node = min(nb_commands_per_node, self.gpus//nb_gpus_per_command)
 
         pbs_files = []
         # Distribute equally the jobs among the PBS files and generate those files
@@ -107,10 +109,9 @@ class Queue:
             pbs = PBS(self.name, self.walltime)
 
             # Set resource: nodes
-            ppn = len(commands) * nb_cores_per_command
-            resource = "1:ppn={ppn}".format(ppn=ppn)
+            resource = "1:ppn={ppn}".format(ppn=len(commands)*nb_cores_per_command)
             if self.gpus > 0:
-                resource += ":gpus={gpus}".format(gpus=ppn)
+                resource += ":gpus={gpus}".format(gpus=len(commands)*nb_gpus_per_command)
 
             pbs.add_resources(nodes=resource)
 
