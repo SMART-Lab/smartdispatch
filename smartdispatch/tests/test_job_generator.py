@@ -1,12 +1,16 @@
 from nose.tools import assert_true, assert_equal, assert_raises
 
 import os
-from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator
+from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator, MammouthJobGenerator
+from smartdispatch.job_generator import job_generator_factory
 import unittest
+import tempfile
+import shutil
 
 
 class TestJobGenerator(unittest.TestCase):
     def setUp(self):
+        self.testing_dir = tempfile.mkdtemp()
         self.name = "qtest@mp2"
         self.walltime = "10:00"
         self.cores = 42
@@ -28,6 +32,9 @@ class TestJobGenerator(unittest.TestCase):
                           #'mem_per_node': None,
                           'modules': self.modules
                           }
+
+    def tearDown(self):
+        shutil.rmtree(self.testing_dir)
 
     def test_generate_pbs(self):
         commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
@@ -81,6 +88,17 @@ class TestJobGenerator(unittest.TestCase):
         # Check if needed modules for this queue are included in the PBS file
         assert_equal(pbs_list[0].modules, self.modules)
 
+        # Test creating a simple job generator
+        queue = {"queue_name": "qtest"}
+        job_generator = JobGenerator(queue, commands=[])
+
+    def test_write_pbs_files(self):
+        commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
+        command_params = {'nb_cores_per_command': self.cores}
+        job_generator = JobGenerator(self.queue, commands, command_params)
+        filenames = job_generator.write_pbs_files(self.testing_dir)
+        assert_equal(len(filenames), 4)
+
 
 class TestGuilliminQueue(TestJobGenerator):
     def test_generate_pbs(self):
@@ -99,3 +117,18 @@ class TestGuilliminQueue(TestJobGenerator):
 
         if bak_env_home_group is not None:
             os.environ['HOME_GROUP'] = bak_env_home_group
+
+
+def test_job_generator_factory():
+    queue = {"queue_name": "qtest"}
+    commands = []
+    job_generator = job_generator_factory(queue, commands, cluster_name="mammouth")
+    assert_true(isinstance(job_generator, MammouthJobGenerator))
+
+    job_generator = job_generator_factory(queue, commands, cluster_name="guillimin")
+    assert_true(isinstance(job_generator, GuilliminJobGenerator))
+
+    job_generator = job_generator_factory(queue, commands, cluster_name=None)
+    assert_true(isinstance(job_generator, JobGenerator))
+    assert_true(not isinstance(job_generator, GuilliminJobGenerator))
+    assert_true(not isinstance(job_generator, MammouthJobGenerator))

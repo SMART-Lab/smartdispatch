@@ -5,7 +5,7 @@ regex_resource_nodes = re.compile("[a-zA-Z0-9]+(:ppn=\d+)?(:gpus=\d+)?(:[a-zA-Z0
 regex_resource_pmem = re.compile("[0-9]+(b|kb|mb|gb|tb)?")
 
 
-class PBS:
+class PBS(object):
     """ Offers functionalities to manage a PBS file.
 
     For more information about the PBS file format see:
@@ -112,8 +112,8 @@ class PBS:
         """
         self.commands += commands
 
-    def write(self, filename):
-        """ Writes this PBS job to a file.
+    def save(self, filename):
+        """ Saves this PBS job to a file.
 
         Parameters
         ----------

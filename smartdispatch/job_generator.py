@@ -7,7 +7,7 @@ from smartdispatch import get_available_queues
 from smartdispatch import utils
 
 
-def job_generator_factory(queue, commands, command_params, cluster_name=None):
+def job_generator_factory(queue, commands, command_params={}, cluster_name=None):
     if cluster_name == "mammouth":
         return MammouthJobGenerator(queue, commands, command_params)
     elif cluster_name == "guillimin":
@@ -64,7 +64,7 @@ class JobGenerator:
         #self.mem_per_command = command_params.get('mem_per_command', 0.0)
 
     def generate_pbs(self):
-        """ Generates PBS objects allowing the execution of every commands on this queue. """
+        """ Generates PBS files allowing the execution of every commands on the given queue. """
         nb_commands_per_node = self.nb_cores_per_node//self.nb_cores_per_command
 
         if self.nb_gpus_per_node > 0 and self.nb_gpus_per_command > 0:
@@ -90,7 +90,7 @@ class JobGenerator:
         return pbs_files
 
     def write_pbs_files(self, pbs_dir="./"):
-        """ Generates PBS objects allowing the execution of every commands on this queue.
+        """ Writes PBS files allowing the execution of every commands on the given queue.
 
         Parameters
         ----------
@@ -101,7 +101,7 @@ class JobGenerator:
         pbs_filenames = []
         for i, pbs in enumerate(pbs_list):
             pbs_filename = os.path.join(pbs_dir, 'job_commands_' + str(i) + '.sh')
-            pbs.write(pbs_filename)
+            pbs.save(pbs_filename)
             pbs_filenames.append(pbs_filename)
 
         return pbs_filenames

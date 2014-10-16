@@ -114,7 +114,7 @@ wait""".format(command1=commands[0], command2=commands[1])
 
         assert_equal(str(pbs), expected)
 
-    def test_write(self):
+    def test_save(self):
         pbs_filename = os.path.join(self.testing_dir, "pbs.sh")
-        self.pbs.write(pbs_filename)
+        self.pbs.save(pbs_filename)
         assert_equal(str(self.pbs), open(pbs_filename).read())
