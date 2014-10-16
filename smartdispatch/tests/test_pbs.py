@@ -1,6 +1,7 @@
 from nose.tools import assert_true, assert_equal, assert_raises
 from numpy.testing import assert_array_equal
 
+
 from smartdispatch.pbs import PBS
 import unittest
 import tempfile

@@ -7,15 +7,15 @@ from subprocess import check_output
 
 from smartdispatch.command_manager import CommandManager
 
-from smartdispatch.cluster import queue_factory, get_known_queues
-from smartdispatch.pbs import write_pbs_to_files
+from smartdispatch.job_generator import job_generator_factory
+from smartdispatch import get_available_queues
 
 import logging
 import smartdispatch
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
 
-AVAILABLE_QUEUES = get_known_queues()
+AVAILABLE_QUEUES = get_available_queues()
 
 
 def main():
@@ -39,8 +39,10 @@ def main():
         commands = smartdispatch.replace_uid_tag(commands)
 
         path_job_logs, path_job_commands = create_job_folders(jobname)
-    else:
+    elif args.mode == "resume":
         path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
+    else:
+        raise ValueError("Unknown subcommand!")
 
     # Pool of workers
     if args.pool is not None:
@@ -62,9 +64,21 @@ def main():
         commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
-    queue = queue_factory(name=args.queueName, walltime=args.walltime, cores=args.coresPerNode, gpus=args.gpusPerNode, modules=args.modules)
-    pbs_list = queue.generate_pbs(commands, nb_cores_per_command=args.coresPerCommand, nb_gpus_per_command=args.gpusPerCommand, mem_per_command=0)
-    pbs_filenames = write_pbs_to_files(pbs_list, path_job_commands)
+    queue = {'queue_name': args.queueName,
+             'walltime': args.walltime,
+             'nb_cores_per_node': args.coresPerNode,
+             'nb_gpus_per_node': args.gpusPerNode,
+             'mem_per_node': None,  # args.memPerNode,
+             'modules': args.modules
+             }
+
+    command_params = {'nb_cores_per_command': args.coresPerCommand,
+                      'nb_gpus_per_command': args.gpusPerCommand,
+                      'mem_per_command': None  # args.memPerCommand
+                      }
+
+    job_generator = job_generator_factory(queue, commands, command_params)
+    pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
     # Launch the jobs with QSUB
     if not args.doNotLaunch:

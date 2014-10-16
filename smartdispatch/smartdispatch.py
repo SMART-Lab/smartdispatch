@@ -4,6 +4,7 @@ import os
 import itertools
 from datetime import datetime
 
+import smartdispatch
 from smartdispatch import utils
 
 UID_TAG = "{UID}"
@@ -140,3 +141,18 @@ def unfold_argument(argument):
 
 def replace_uid_tag(commands):
     return [command.replace("{UID}", utils.generate_uid_from_string(command)) for command in commands]
+
+
+def get_available_queues(cluster_name=utils.detect_cluster()):
+    """ Fetches all available queues on the current cluster """
+    if cluster_name is None:
+        return {}
+
+    smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
+    config_dir = os.path.join(smartdispatch_dir, 'config')
+
+    config_filename = cluster_name + ".json"
+    config_filepath = os.path.join(config_dir, config_filename)
+    queues_infos = utils.load_dict_from_json_file(config_filepath)
+
+    return queues_infos

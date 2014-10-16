@@ -1,4 +1,3 @@
-import os
 import re
 
 regex_walltime = re.compile("(\d+:){1,4}")
@@ -6,18 +5,8 @@ regex_resource_nodes = re.compile("[a-zA-Z0-9]+(:ppn=\d+)?(:gpus=\d+)?(:[a-zA-Z0
 regex_resource_pmem = re.compile("[0-9]+(b|kb|mb|gb|tb)?")
 
 
-def write_pbs_to_files(pbs_list, pbs_dir="./"):
-    pbs_filenames = []
-    for i, pbs in enumerate(pbs_list):
-        pbs_filename = os.path.join(pbs_dir, 'job_commands_' + str(i) + '.sh')
-        pbs.write(pbs_filename)
-        pbs_filenames.append(pbs_filename)
-
-    return pbs_filenames
-
-
 class PBS:
-    """ Offers functionalities to generate PBS files.
+    """ Offers functionalities to manage a PBS file.
 
     For more information about the PBS file format see:
     `http://docs.adaptivecomputing.com/suite/8-0/basic/help.htm#topics/torque/2-jobs/requestingRes.htm?TocPath=TORQUE Resource Manager|Submitting and managing jobs|Job submission|_____3`
@@ -58,7 +47,7 @@ class PBS:
         -------
         *A* : account_string
             Defines the account string associated with the job.
-        *N* : name (up to 15 characters)
+        *N* : name (up to 64 characters)
             Declares a name for the job. It must consist of printable,
             non white space characters with the first character alphabetic.
         """
