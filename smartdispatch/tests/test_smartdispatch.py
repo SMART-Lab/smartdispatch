@@ -1,7 +1,7 @@
 import smartdispatch
 from StringIO import StringIO
 
-from nose.tools import assert_true, assert_equal
+from nose.tools import assert_true, assert_equal, assert_raises
 from numpy.testing import assert_array_equal
 from datetime import datetime
 from smartdispatch import utils
@@ -116,3 +116,15 @@ def test_replace_uid_tag():
     commands = ["a command with a {UID} tag"] * 10
     uid = utils.generate_uid_from_string(commands[0])
     assert_array_equal(smartdispatch.replace_uid_tag(commands), [commands[0].replace("{UID}", uid)]*len(commands))
+
+
+def test_get_available_queues():
+    assert_equal(smartdispatch.get_available_queues(cluster_name=None), {})
+
+    queues_infos = smartdispatch.get_available_queues(cluster_name="guillimin")
+    assert_true(len(queues_infos) > 0)
+
+    queues_infos = smartdispatch.get_available_queues(cluster_name="mammouth")
+    assert_true(len(queues_infos) > 0)
+
+    assert_raises(IOError, smartdispatch.get_available_queues, cluster_name="unknown")
