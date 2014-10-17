@@ -54,8 +54,8 @@ class PBS(object):
         for option_name, option_value in options.items():
             # If known option, validate it.
             if option_name.strip('-') == 'N':
-                if len(option_name) > 15:
-                    raise ValueError("Maximum number of characters for the name is: 15")
+                if len(option_name) > 64:
+                    raise ValueError("Maximum number of characters for the name is: 64")
 
             self.options["-" + option_name] = option_value
 
