@@ -9,6 +9,8 @@ from smartdispatch import utils
 def job_generator_factory(queue, commands, command_params={}, cluster_name=None):
     if cluster_name == "guillimin":
         return GuilliminJobGenerator(queue, commands, command_params)
+    elif cluster_name == "mammouth":
+        MammouthJobGenerator(queue, commands, command_params)
 
     return JobGenerator(queue, commands, command_params)
 
@@ -75,6 +77,20 @@ class JobGenerator(object):
             pbs_filenames.append(pbs_filename)
 
         return pbs_filenames
+
+
+class MammouthJobGenerator(JobGenerator):
+    def generate_pbs(self, *args, **kwargs):
+        import re
+
+        pbs_list = JobGenerator.generate_pbs(self, *args, **kwargs)
+
+        if self.queue.name.endswith("@mp2"):
+            for pbs in pbs_list:
+                pbs.resources['nodes'] = re.sub("ppn=[0-9]+", "ppn=1", pbs.resources['nodes'])
+                print pbs
+
+        return pbs_list
 
 
 class GuilliminJobGenerator(JobGenerator):
