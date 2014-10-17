@@ -13,6 +13,7 @@ See `smart_dispatch.py --help`
 ### Example
 *Basic*
 To launch a job composed of four variations of a simple command:
+
 `smart_dispatch.py -q qtest@mp2 launch python my_script.py "1 2" 80 "tanh sigmoid" 0.1`
 
 Will generate 4 different commands, launch them on the queue qtest@mp2 and save output/error logs in a folder `./SMART_DISPATCH_LOGS/{job_id}/logs/`.
@@ -25,14 +26,15 @@ python my_script.py 2 80 tanh 0.1
 ```
 
 *Using a pool of workers*
-Building upon previous example, one could prefer using a pool of workers to achieve the execution of the commands :
+Building upon previous example, one could prefer using a pool of workers to achieve the execution of the commands:
+
 `smart_dispatch.py -q qtest@mp2 -p 2 launch python my_script.py "1 2" 80 "tanh sigmoid" 0.1`
 
 Will still generate four different commands but, instead of launching them, two worker commands will be launched on qtest@mp2 to execute all generated commands.
 
 
 *Resuming a job (if launched using pool of workers)*
-Given the `job_id` (i.e. folder's name in `SMART_DISPATCH_LOGS/{job_id}/`) one can resume a job that was launched using the pool of workers option.
+Given the `job_id` (i.e. folder's name in `SMART_DISPATCH_LOGS/{job_id}/`) one can resume a job that was launched using the pool of workers option:
 
 `smart_dispatch.py -q qtest@mp2 -p 4 resume job_id`
 
