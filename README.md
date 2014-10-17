@@ -11,7 +11,7 @@ A batch job launcher for the Mammouth supercomputer.
 See `smart_dispatch.py --help`
 
 ### Example
-`smart_dispatch.py -q qtest@mp2 python trainAutoEnc2.py "1 2 3 4" 80 sigmoid 0.1`
+`smart_dispatch.py -q qtest@mp2 launch python trainAutoEnc2.py "1 2 3 4" 80 sigmoid 0.1`
 
 Will Generate 4 different commands and launch them on the queue qtest@mp2.
 
