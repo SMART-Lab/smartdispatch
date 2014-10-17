@@ -1,7 +1,7 @@
 import smartdispatch
 from StringIO import StringIO
 
-from nose.tools import assert_true, assert_equal
+from nose.tools import assert_true, assert_equal, assert_raises
 from numpy.testing import assert_array_equal
 from datetime import datetime
 from smartdispatch import utils
@@ -100,10 +100,6 @@ def test_unfold_argument():
     for arg in ["arg1 arg2", "arg1 ", " arg1"]:
         assert_array_equal(smartdispatch.unfold_argument(arg), arg.split(" "))
 
-    # Test list (comma)
-    for arg in ["[arg1 arg2]", "[subarg11 subarg12, arg2]", "[arg1, arg2]", "[arg1, ]", "[ ,arg1]"]:
-        assert_array_equal(smartdispatch.unfold_argument(arg), arg[1:-1].split(","))
-
 
 def test_replace_uid_tag():
     command = "command without uid tag"
@@ -122,93 +118,12 @@ def test_replace_uid_tag():
     assert_array_equal(smartdispatch.replace_uid_tag(commands), [commands[0].replace("{UID}", uid)]*len(commands))
 
 
-def test_generate_pbs():
-    # Create empty PBS file
-    expected = """#!/bin/bash
-#PBS -q qtest@mp2
-#PBS -V
-#PBS -l walltime=01:00:00
-#PBS -l nodes=1:ppn=1
+def test_get_available_queues():
+    assert_equal(smartdispatch.get_available_queues(cluster_name=None), {})
+    assert_equal(smartdispatch.get_available_queues(cluster_name="unknown"), {})
 
-# Modules #
+    queues_infos = smartdispatch.get_available_queues(cluster_name="guillimin")
+    assert_true(len(queues_infos) > 0)
 
-# Commands #
-
-wait"""
-    pbs = smartdispatch.generate_pbs([], queue="qtest@mp2", walltime="01:00:00")
-    assert_equal(pbs, expected)
-
-    # Test options
-    expected = """#!/bin/bash
-#PBS -q qtest@mp2
-#PBS -V
-#PBS -A xyz-123-ab
-#PBS -l walltime=01:00:00
-#PBS -l nodes=2:ppn=3:gpus=1
-
-# Modules #
-
-# Commands #
-
-wait"""
-    kwargs = dict(account_name="xyz-123-ab", nodes=2, ppn=3, gpus=1)
-    pbs = smartdispatch.generate_pbs([], queue="qtest@mp2", walltime="01:00:00", **kwargs)
-    assert_equal(pbs, expected)
-
-    # Test modules
-    expected = """#!/bin/bash
-#PBS -q qtest@mp2
-#PBS -V
-#PBS -l walltime=01:00:00
-#PBS -l nodes=1:ppn=1
-
-# Modules #
-module load CUDA_Toolkit/6.0
-module load python2.7
-
-# Commands #
-
-wait"""
-    kwargs = dict(modules=["CUDA_Toolkit/6.0", "python2.7"])
-    pbs = smartdispatch.generate_pbs([], queue="qtest@mp2", walltime="01:00:00", **kwargs)
-    assert_equal(pbs, expected)
-
-    # Test commands
-    commands = ["echo 1 2 3", "echo 3 2 1"]
-    names = map(smartdispatch.generate_name_from_command, commands)
-    expected = """#!/bin/bash
-#PBS -q qtest@mp2
-#PBS -V
-#PBS -l walltime=01:00:00
-#PBS -l nodes=1:ppn=1
-
-# Modules #
-
-# Commands #
-cd .; {command1} 1>> "./{name1}.o" 2>> "./{name1}.e" &
-cd .; {command2} 1>> "./{name2}.o" 2>> "./{name2}.e" &
-
-wait""".format(command1=commands[0], command2=commands[1],
-               name1=names[0], name2=names[1])
-    pbs = smartdispatch.generate_pbs(commands, queue="qtest@mp2", walltime="01:00:00")
-    assert_equal(pbs, expected)
-
-    # Test cwd and logs_dir
-    cwd = "/path/to/cwd"
-    logs_dir = "/path/to/logs_dir/"
-    commands = ["echo 1 2 3"]
-    names = map(smartdispatch.generate_name_from_command, commands)
-    expected = """#!/bin/bash
-#PBS -q qtest@mp2
-#PBS -V
-#PBS -l walltime=01:00:00
-#PBS -l nodes=1:ppn=1
-
-# Modules #
-
-# Commands #
-cd {cwd}; {command} 1>> "{logs_dir}{name}.o" 2>> "{logs_dir}{name}.e" &
-
-wait""".format(command=commands[0], name=names[0], cwd=cwd, logs_dir=logs_dir)
-    pbs = smartdispatch.generate_pbs(commands, queue="qtest@mp2", walltime="01:00:00", cwd=cwd, logs_dir=logs_dir)
-    assert_equal(pbs, expected)
+    queues_infos = smartdispatch.get_available_queues(cluster_name="mammouth")
+    assert_true(len(queues_infos) > 0)

@@ -4,6 +4,7 @@ import os
 import itertools
 from datetime import datetime
 
+import smartdispatch
 from smartdispatch import utils
 
 UID_TAG = "{UID}"
@@ -132,12 +133,7 @@ def unfold_argument(argument):
     Complex arguments
     -----------------
     *list (space)*: "item1 item2 ... itemN"
-    *list (comma)*: "[item1,item2,...,itemN]"
     '''
-
-    # Check if `argument` is a comma separated list (may contain spaces)
-    if argument[0] == "[" and argument[-1] == "]":
-        return argument[1:-1].split(",")
 
     # Suppose `argument`is a space separated list
     return argument.split(" ")
@@ -147,71 +143,19 @@ def replace_uid_tag(commands):
     return [command.replace("{UID}", utils.generate_uid_from_string(command)) for command in commands]
 
 
-def generate_pbs(commands, queue, walltime, cwd='.', logs_dir='.', **kwargs):
-    ''' Generates the content of a PBS file used by the command qsub.
+def get_available_queues(cluster_name=utils.detect_cluster()):
+    """ Fetches all available queues on the current cluster """
+    if cluster_name is None:
+        return {}
 
-    Parameters
-    ----------
-    commands : list of str
-        list of every commands to be included in the PBS file
-    queue : str
-        name of the queue on which commands will be excuted
-    walltime : str
-        maximum time allocated to execute every commands (DD:HH:MM:SS)
-    cwd : str
-        current working directory where commands will be executed
-    logs_dir : str
-        directory where commands' logs will be saved
-    kwargs : dictionnary of options
-        options to add in the PBS (see below for supported options)
+    smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
+    config_dir = os.path.join(smartdispatch_dir, 'config')
 
-    Returns
-    -------
-    pbs : str
-        content of the PBS file
+    config_filename = cluster_name + ".json"
+    config_filepath = os.path.join(config_dir, config_filename)
 
-    Options
-    -------
-    *account_name*:
-        name of the account to use (usally RAPid)
-    *nodes*
-        number of nodes needed (default: 1)
-    *ppn*
-        number of cpus needed (default: 1)
-    *gpus*
-        number of gpus needed (default: 0)
-    *modules*
-        list of modules to load prior executing commands
-    '''
+    if not os.path.isfile(config_filepath):
+        return {}  # Unknown cluster
 
-    pbs = []
-    pbs += ["#!/bin/bash"]
-    pbs += ["#PBS -q " + queue]
-    pbs += ["#PBS -V"]
-
-    if "account_name" in kwargs:
-        pbs += ["#PBS -A " + kwargs['account_name']]
-
-    pbs += ["#PBS -l walltime=" + walltime]
-    pbs += ["#PBS -l nodes={nodes}:ppn={ppn}".format(nodes=kwargs.get('nodes', 1), ppn=kwargs.get('ppn', 1))]
-
-    if "gpus" in kwargs:
-        pbs[-1] += ":gpus=" + str(kwargs['gpus'])
-
-    pbs += ["\n# Modules #"]
-
-    for module in kwargs.get('modules', []):
-        pbs += ["module load " + module]
-
-    pbs += ["\n# Commands #"]
-
-    command_template = 'cd ' + cwd + '; {command} 1>> "{output_log}" 2>> "{error_log}" &'
-    for command in commands:
-        log_filename = os.path.join(logs_dir, generate_name_from_command(command))
-        pbs += [command_template.format(command=command,
-                                        output_log=log_filename+".o",
-                                        error_log=log_filename+".e")]
-
-    pbs += ["\nwait"]
-
-    return "\n".join(pbs)
+    queues_infos = utils.load_dict_from_json_file(config_filepath)
+    return queues_infos

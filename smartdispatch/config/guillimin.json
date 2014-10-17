@@ -1,0 +1,57 @@
+{
+    "k20": {
+        "ram": 64,
+        "modules": ["CUDAToolkit/6.0"],
+        "cores": 16,
+        "max_walltime": "30:00:00:00",
+        "gpus": 2,
+        "nodes": 25,
+        "min_ppn": 1
+    },
+    "hb": {
+        "ram": 24,
+        "cores": 12,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1
+    },
+    "sw": {
+        "ram": 36,
+        "cores": 12,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1
+    },
+    "sw2": {
+        "ram": 64,
+        "cores": 16,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1
+    },
+    "lm256": {
+        "queue_name": "lm",
+        "ram": 72,
+        "cores": 12,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1,
+        "cores_extra_infos": ":256"
+    },
+    "lm512": {
+        "queue_name": "lm",
+        "ram": 72,
+        "cores": 12,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1,
+        "cores_extra_infos": ":512"
+    },
+    "lm2": {
+        "ram": 128,
+        "cores": 16,
+        "max_walltime": "30:00:00:00",
+        "min_ppn": 1
+    },
+    "xlm2": {
+        "ram": 384,
+        "cores": 16,
+        "max_walltime": "7:00:00:00",
+        "min_ppn": 1
+    }
+}

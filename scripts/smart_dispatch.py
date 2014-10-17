@@ -3,36 +3,29 @@
 
 import os
 import argparse
-import math
+import numpy as np
 from subprocess import check_output
 
-from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
 
+from smartdispatch.queue import Queue
+from smartdispatch.job_generator import job_generator_factory
+from smartdispatch import get_available_queues
+from smartdispatch import utils
+
+import logging
 import smartdispatch
 
 
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
-
-AVAILABLE_QUEUES = {
-    # Mammouth Parallel
-    'qtest@mp2': {'coresPerNode': 24, 'maxWalltime': '00:01:00:00'},
-    'qwork@mp2': {'coresPerNode': 24, 'maxWalltime': '05:00:00:00'},
-    'qfbb@mp2': {'coresPerNode': 288, 'maxWalltime': '05:00:00:00'},
-    'qfat256@mp2': {'coresPerNode': 48, 'maxWalltime': '05:00:00:00'},
-    'qfat512@mp2': {'coresPerNode': 48, 'maxWalltime': '02:00:00:00'},
-
-    # Mammouth Série
-    'qtest@ms': {'coresPerNode': 8, 'maxWalltime': '00:01:00:00'},
-    'qwork@ms': {'coresPerNode': 8, 'maxWalltime': '05:00:00:00'},
-    'qlong@ms': {'coresPerNode': 8, 'maxWalltime': '41:16:00:00'},
-
-    # Mammouth GPU
-    # 'qwork@brume' : {'coresPerNode' : 0, 'maxWalltime' : '05:00:00:00'} # coresPerNode is variable and not relevant for this queue
-}
+CLUSTER_NAME = utils.detect_cluster()
+AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
 
 
 def main():
+    # Necessary if we want 'logging.info' to appear in stderr.
+    logging.root.setLevel(logging.INFO)
+
     args = parse_arguments()
 
     # Check if RESUME or LAUNCH mode
@@ -49,13 +42,15 @@ def main():
 
         commands = smartdispatch.replace_uid_tag(commands)
 
-        job_directory, qsub_directory = create_job_folders(jobname)
+        path_job_logs, path_job_commands = create_job_folders(jobname)
+    elif args.mode == "resume":
+        path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
     else:
-        job_directory, qsub_directory = get_job_folders(args.batch_uid)
+        raise ValueError("Unknown subcommand!")
 
     # Pool of workers
     if args.pool is not None:
-        command_manager = CommandManager(os.path.join(qsub_directory, "commands.txt"))
+        command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
 
         # If resume mode, reset running jobs
         if args.mode == "launch":
@@ -63,25 +58,31 @@ def main():
         else:
             command_manager.reset_running_commands()
 
-        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, job_directory)
+        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
         # Replace commands with `args.pool` workers
         commands = [worker_command] * args.pool
 
-    # Distribute equally the jobs among the QSUB files and generate those files
-    nb_commands = len(commands)
-    nb_jobs = int(math.ceil(nb_commands / float(args.nbCommandsPerNode)))
-    nb_commands_per_file = int(math.ceil(nb_commands / float(nb_jobs)))
+    # Add redirect for output and error logs
+    for i, command in enumerate(commands):
+        log_filename = os.path.join(path_job_logs, smartdispatch.generate_name_from_command(command, max_length_arg=30))
+        commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
+        commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
-    qsub_filenames = []
-    for i, commands_per_file in enumerate(utils.chunks(commands, n=nb_commands_per_file)):
-        qsub_filename = os.path.join(qsub_directory, 'jobCommands_' + str(i) + '.sh')
-        write_qsub_file(commands_per_file, qsub_filename, job_directory, args.queueName, args.walltime, os.getcwd(), args.cuda)
-        qsub_filenames.append(qsub_filename)
+    # TODO: use args.memPerNode instead of args.memPerNode
+    queue = Queue(args.queueName, CLUSTER_NAME, args.walltime, args.coresPerNode, args.gpusPerNode, np.inf, args.modules)
+
+    command_params = {'nb_cores_per_command': args.coresPerCommand,
+                      'nb_gpus_per_command': args.gpusPerCommand,
+                      'mem_per_command': None  # args.memPerCommand
+                      }
+
+    job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME)
+    pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
     # Launch the jobs with QSUB
     if not args.doNotLaunch:
-        for qsub_filename in qsub_filenames:
-            qsub_output = check_output('qsub ' + qsub_filename, shell=True)
+        for pbs_filename in pbs_filenames:
+            qsub_output = check_output('qsub ' + pbs_filename, shell=True)
             print qsub_output,
 
 
@@ -89,11 +90,19 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
-    parser.add_argument('-n', '--nbCommandsPerNode', type=int, required=False, help='Set the number of commands per nodes.')
-    parser.add_argument('-c', '--cuda', action='store_true', help='Load CUDA before executing your code.')
-    parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
+    parser.add_argument('-C', '--coresPerNode', type=int, required=False, help='How many cores there are per node.')
+    parser.add_argument('-G', '--gpusPerNode', type=int, required=False, help='How many gpus there are per node.')
+    #parser.add_argument('-M', '--memPerNode', type=int, required=False, help='How much memory there are per node (in Gb).')
+
+    parser.add_argument('-c', '--coresPerCommand', type=int, required=False, help='How many cores a command needs.', default=1)
+    parser.add_argument('-g', '--gpusPerCommand', type=int, required=False, help='How many gpus a command needs.', default=1)
+    #parser.add_argument('-m', '--memPerCommand', type=float, required=False, help='How much memory a command needs (in Gb).')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
-    parser.add_argument('--pool', type=int, help="Number of workers that will consume commands.")
+
+    parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
+    parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
+
+    parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands.")
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
@@ -108,17 +117,11 @@ def parse_arguments():
     if args.mode == "launch":
         if args.commandsFile is None and len(args.commandAndOptions) < 1:
             parser.error("You need to specify a command to launch.")
-        if args.queueName not in AVAILABLE_QUEUES and (args.nbCommandsPerNode is None or args.walltime is None):
-            parser.error("Unknown queue, --nbCommandsPerNode and --walltime must be set.")
+        if args.queueName not in AVAILABLE_QUEUES and ((args.coresPerNode is None and args.gpusPerNode is None) or args.walltime is None):
+            parser.error("Unknown queue, --coresPerCommand/--gpusPerCommand and --walltime must be set.")
     else:
         if args.pool is None:
             resume_parser.error("The resume feature only works with the --pool argument.")
-
-    # Set queue defaults for non specified params
-    if args.nbCommandsPerNode is None:
-        args.nbCommandsPerNode = AVAILABLE_QUEUES[args.queueName]['coresPerNode']
-    if args.walltime is None:
-        args.walltime = AVAILABLE_QUEUES[args.queueName]['maxWalltime']
 
     return args
 
@@ -155,17 +158,6 @@ def create_job_folders(jobname):
         os.makedirs(path_job_logs)
 
     return path_job_logs, path_job_commands
-
-
-def write_qsub_file(commands, pbs_filename, job_directory, queue, walltime, current_directory, use_cuda=False):
-    with open(pbs_filename, 'w') as pbs_file:
-
-        kwargs = {}
-        if use_cuda:
-            kwargs['module'] = ["cuda"]
-
-        pbs = smartdispatch.generate_pbs(commands, queue, walltime, cwd=current_directory, logs_dir=job_directory, **kwargs)
-        pbs_file.write(pbs)
 
 
 if __name__ == "__main__":
