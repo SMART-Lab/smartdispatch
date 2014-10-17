@@ -15,8 +15,9 @@ from smartdispatch import utils
 
 import logging
 import smartdispatch
-LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
+
+LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 CLUSTER_NAME = utils.detect_cluster()
 AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
 

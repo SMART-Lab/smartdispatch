@@ -18,12 +18,10 @@ class JobGenerator(object):
 
     Parameters
     ----------
-    queue : dict
-        queue to use
+    queue : `Queue` instance
+        queue on which commands will be executed
     commands : list of str
         commands to put in PBS files
-    queue_params : dict
-        information about the queue
     command_params : dict
         information about the commands
     """
