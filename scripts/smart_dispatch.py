@@ -9,13 +9,14 @@ from smartdispatch.command_manager import CommandManager
 
 from smartdispatch.job_generator import job_generator_factory
 from smartdispatch import get_available_queues
+from smartdispatch import utils
 
 import logging
 import smartdispatch
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 
-
-AVAILABLE_QUEUES = get_available_queues()
+CLUSTER_NAME = utils.detect_cluster()
+AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
 
 
 def main():
@@ -77,7 +78,7 @@ def main():
                       'mem_per_command': None  # args.memPerCommand
                       }
 
-    job_generator = job_generator_factory(queue, commands, command_params)
+    job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME)
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
     # Launch the jobs with QSUB

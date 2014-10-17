@@ -1,7 +1,7 @@
 from nose.tools import assert_true, assert_equal, assert_raises
 
 import os
-from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator, MammouthJobGenerator
+from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator
 from smartdispatch.job_generator import job_generator_factory
 import unittest
 import tempfile
@@ -122,13 +122,9 @@ class TestGuilliminQueue(TestJobGenerator):
 def test_job_generator_factory():
     queue = {"queue_name": "qtest"}
     commands = []
-    job_generator = job_generator_factory(queue, commands, cluster_name="mammouth")
-    assert_true(isinstance(job_generator, MammouthJobGenerator))
-
     job_generator = job_generator_factory(queue, commands, cluster_name="guillimin")
     assert_true(isinstance(job_generator, GuilliminJobGenerator))
 
     job_generator = job_generator_factory(queue, commands, cluster_name=None)
     assert_true(isinstance(job_generator, JobGenerator))
     assert_true(not isinstance(job_generator, GuilliminJobGenerator))
-    assert_true(not isinstance(job_generator, MammouthJobGenerator))
