@@ -10,8 +10,8 @@ A batch job launcher for the Mammouth supercomputer.
 ## Usage
 See `smart_dispatch.py --help`
 
-### Example
-####Basic
+## Examples
+###Basic
 To launch a job composed of four variations of a simple command:
 
 `smart_dispatch.py -q qtest@mp2 launch python my_script.py "1 2" 80 "tanh sigmoid" 0.1`
@@ -25,7 +25,7 @@ python my_script.py 2 80 sigmoid 0.1
 python my_script.py 2 80 tanh 0.1
 ```
 
-####Using a pool of workers
+###Using a pool of workers
 Building upon previous example, one could prefer using a pool of workers to achieve the execution of the commands:
 
 `smart_dispatch.py -q qtest@mp2 -p 2 launch python my_script.py "1 2" 80 "tanh sigmoid" 0.1`
@@ -33,7 +33,7 @@ Building upon previous example, one could prefer using a pool of workers to achi
 Will still generate four different commands but, instead of launching them, two worker commands will be launched on qtest@mp2 to execute all generated commands.
 
 
-####Resuming a job (if launched using pool of workers)
+###Resuming a job (if launched using pool of workers)
 Given the `job_id` (i.e. folder's name in `SMART_DISPATCH_LOGS/{job_id}/`) one can resume a job that was launched using the pool of workers option:
 
 `smart_dispatch.py -q qtest@mp2 -p 4 resume job_id`
