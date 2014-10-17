@@ -120,11 +120,10 @@ def test_replace_uid_tag():
 
 def test_get_available_queues():
     assert_equal(smartdispatch.get_available_queues(cluster_name=None), {})
+    assert_equal(smartdispatch.get_available_queues(cluster_name="unknown"), {})
 
     queues_infos = smartdispatch.get_available_queues(cluster_name="guillimin")
     assert_true(len(queues_infos) > 0)
 
     queues_infos = smartdispatch.get_available_queues(cluster_name="mammouth")
     assert_true(len(queues_infos) > 0)
-
-    assert_raises(IOError, smartdispatch.get_available_queues, cluster_name="unknown")

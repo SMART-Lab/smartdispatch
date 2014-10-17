@@ -3,10 +3,12 @@
 
 import os
 import argparse
+import numpy as np
 from subprocess import check_output
 
 from smartdispatch.command_manager import CommandManager
 
+from smartdispatch.queue import Queue
 from smartdispatch.job_generator import job_generator_factory
 from smartdispatch import get_available_queues
 from smartdispatch import utils
@@ -65,13 +67,8 @@ def main():
         commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
 
-    queue = {'queue_name': args.queueName,
-             'walltime': args.walltime,
-             'nb_cores_per_node': args.coresPerNode,
-             'nb_gpus_per_node': args.gpusPerNode,
-             'mem_per_node': None,  # args.memPerNode,
-             'modules': args.modules
-             }
+    # TODO: use args.memPerNode instead of args.memPerNode
+    queue = Queue(args.queueName, CLUSTER_NAME, args.walltime, args.coresPerNode, args.gpusPerNode, np.inf, args.modules)
 
     command_params = {'nb_cores_per_command': args.coresPerCommand,
                       'nb_gpus_per_command': args.gpusPerCommand,

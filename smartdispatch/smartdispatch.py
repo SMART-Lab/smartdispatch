@@ -153,6 +153,9 @@ def get_available_queues(cluster_name=utils.detect_cluster()):
 
     config_filename = cluster_name + ".json"
     config_filepath = os.path.join(config_dir, config_filename)
-    queues_infos = utils.load_dict_from_json_file(config_filepath)
 
+    if not os.path.isfile(config_filepath):
+        return {}  # Unknown cluster
+
+    queues_infos = utils.load_dict_from_json_file(config_filepath)
     return queues_infos

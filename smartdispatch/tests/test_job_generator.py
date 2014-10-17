@@ -1,6 +1,7 @@
 from nose.tools import assert_true, assert_equal, assert_raises
 
 import os
+from smartdispatch.queue import Queue
 from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator
 from smartdispatch.job_generator import job_generator_factory
 import unittest
@@ -11,27 +12,16 @@ import shutil
 class TestJobGenerator(unittest.TestCase):
     def setUp(self):
         self.testing_dir = tempfile.mkdtemp()
-        self.name = "qtest@mp2"
+        self.cluster_name = "skynet"
+        self.name = "9000@hal"
         self.walltime = "10:00"
         self.cores = 42
+        self.gpus = 42
+        self.mem_per_node = 32
         self.modules = ["cuda", "python"]
 
-        self.queue = {'queue_name': self.name,
-                      'walltime': self.walltime,
-                      'nb_cores_per_node': self.cores,
-                      #'nb_gpus_per_node': None,
-                      #'mem_per_node': None,
-                      'modules': self.modules
-                      }
-
-        self.gpus = 42
-        self.queue_gpu = {'queue_name': self.name,
-                          'walltime': self.walltime,
-                          'nb_cores_per_node': self.cores,
-                          'nb_gpus_per_node': self.gpus,
-                          #'mem_per_node': None,
-                          'modules': self.modules
-                          }
+        self.queue = Queue(self.name, self.cluster_name, self.walltime, self.cores, 0, self.modules)
+        self.queue_gpu = Queue(self.name, self.cluster_name, self.walltime, self.cores, self.gpus, self.mem_per_node, self.modules)
 
     def tearDown(self):
         shutil.rmtree(self.testing_dir)
