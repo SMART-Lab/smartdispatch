@@ -11,11 +11,13 @@ class CommandFilesTests(unittest.TestCase):
 
     def setUp(self):
         self._base_dir = tmp.mkdtemp()
+        self.nb_commands = 3
+
         self.command1 = "1\n"
         self.command2 = "2\n"
         self.command3 = "3\n"
 
-        command_filename = os.path.join(self._base_dir, "commant.txt")
+        command_filename = os.path.join(self._base_dir, "command.txt")
 
         with open(command_filename, "w+") as commands_file:
             commands_file.write(self.command1 + self.command2 + self.command3)
@@ -90,3 +92,13 @@ class CommandFilesTests(unittest.TestCase):
             assert_equal(running_commands_file.read(), "")
 
         assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
+
+    def test_count_commands(self):
+        # SetUp
+        commands = ["4", "5", "6", "7"]
+
+        # The function to test
+        assert_equal(self.command_manager.count_commands(), self.nb_commands)
+
+        self.command_manager.set_commands_to_run(commands)
+        assert_equal(self.command_manager.count_commands(), len(commands) + self.nb_commands)
