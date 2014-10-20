@@ -88,7 +88,6 @@ class MammouthJobGenerator(JobGenerator):
         if self.queue.name.endswith("@mp2"):
             for pbs in pbs_list:
                 pbs.resources['nodes'] = re.sub("ppn=[0-9]+", "ppn=1", pbs.resources['nodes'])
-                print pbs
 
         return pbs_list
 
