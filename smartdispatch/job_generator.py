@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import os
-
+import re
 from smartdispatch.pbs import PBS
 from smartdispatch import utils
 
@@ -16,6 +16,7 @@ def job_generator_factory(queue, commands, command_params={}, cluster_name=None)
 
 
 class JobGenerator(object):
+
     """ Offers functionalities to generate PBS files for a given queue.
 
     Parameters
@@ -27,6 +28,7 @@ class JobGenerator(object):
     command_params : dict
         information about the commands
     """
+
     def __init__(self, queue, commands, command_params={}):
         self.commands = commands
         self.queue = queue
@@ -37,10 +39,10 @@ class JobGenerator(object):
 
     def generate_pbs(self):
         """ Generates PBS files allowing the execution of every commands on the given queue. """
-        nb_commands_per_node = self.queue.nb_cores_per_node//self.nb_cores_per_command
+        nb_commands_per_node = self.queue.nb_cores_per_node // self.nb_cores_per_command
 
         if self.queue.nb_gpus_per_node > 0 and self.nb_gpus_per_command > 0:
-            nb_commands_per_node = min(nb_commands_per_node, self.queue.nb_gpus_per_node//self.nb_gpus_per_command)
+            nb_commands_per_node = min(nb_commands_per_node, self.queue.nb_gpus_per_node // self.nb_gpus_per_command)
 
         pbs_files = []
         # Distribute equally the jobs among the PBS files and generate those files
@@ -48,9 +50,9 @@ class JobGenerator(object):
             pbs = PBS(self.queue.name, self.queue.walltime)
 
             # Set resource: nodes
-            resource = "1:ppn={ppn}".format(ppn=len(commands)*self.nb_cores_per_command)
+            resource = "1:ppn={ppn}".format(ppn=len(commands) * self.nb_cores_per_command)
             if self.queue.nb_gpus_per_node > 0:
-                resource += ":gpus={gpus}".format(gpus=len(commands)*self.nb_gpus_per_command)
+                resource += ":gpus={gpus}".format(gpus=len(commands) * self.nb_gpus_per_command)
 
             pbs.add_resources(nodes=resource)
 
@@ -80,9 +82,8 @@ class JobGenerator(object):
 
 
 class MammouthJobGenerator(JobGenerator):
-    def generate_pbs(self, *args, **kwargs):
-        import re
 
+    def generate_pbs(self, *args, **kwargs):
         pbs_list = JobGenerator.generate_pbs(self, *args, **kwargs)
 
         if self.queue.name.endswith("@mp2"):
@@ -93,6 +94,7 @@ class MammouthJobGenerator(JobGenerator):
 
 
 class GuilliminJobGenerator(JobGenerator):
+
     def generate_pbs(self, *args, **kwargs):
         pbs_list = JobGenerator.generate_pbs(self, *args, **kwargs)
 
