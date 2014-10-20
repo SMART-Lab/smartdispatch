@@ -10,7 +10,7 @@ def job_generator_factory(queue, commands, command_params={}, cluster_name=None)
     if cluster_name == "guillimin":
         return GuilliminJobGenerator(queue, commands, command_params)
     elif cluster_name == "mammouth":
-        MammouthJobGenerator(queue, commands, command_params)
+        return MammouthJobGenerator(queue, commands, command_params)
 
     return JobGenerator(queue, commands, command_params)
 
