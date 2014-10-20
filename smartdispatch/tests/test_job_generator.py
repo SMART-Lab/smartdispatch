@@ -2,7 +2,7 @@ from nose.tools import assert_true, assert_equal, assert_raises
 
 import os
 from smartdispatch.queue import Queue
-from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator
+from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator, MammouthJobGenerator
 from smartdispatch.job_generator import job_generator_factory
 import unittest
 import tempfile
@@ -10,6 +10,7 @@ import shutil
 
 
 class TestJobGenerator(unittest.TestCase):
+
     def setUp(self):
         self.testing_dir = tempfile.mkdtemp()
         self.cluster_name = "skynet"
@@ -91,6 +92,7 @@ class TestJobGenerator(unittest.TestCase):
 
 
 class TestGuilliminQueue(TestJobGenerator):
+
     def test_generate_pbs(self):
         commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
         job_generator = GuilliminJobGenerator(self.queue, commands)
@@ -109,11 +111,25 @@ class TestGuilliminQueue(TestJobGenerator):
             os.environ['HOME_GROUP'] = bak_env_home_group
 
 
+class TestMammouthQueue(unittest.TestCase):
+    def setUp(self):
+        self.commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
+        self.queue = Queue("qtest@mp2", "mammouth")
+
+    def test_generate_pbs(self):
+        job_generator = MammouthJobGenerator(self.queue, self.commands)
+
+        assert_true("ppn=1" in job_generator.generate_pbs()[0].__str__())
+
+
 def test_job_generator_factory():
     queue = {"queue_name": "qtest"}
     commands = []
     job_generator = job_generator_factory(queue, commands, cluster_name="guillimin")
     assert_true(isinstance(job_generator, GuilliminJobGenerator))
+
+    job_generator = job_generator_factory(queue, commands, cluster_name="mammouth")
+    assert_true(isinstance(job_generator, MammouthJobGenerator))
 
     job_generator = job_generator_factory(queue, commands, cluster_name=None)
     assert_true(isinstance(job_generator, JobGenerator))

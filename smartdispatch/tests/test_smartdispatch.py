@@ -1,7 +1,7 @@
 import smartdispatch
 from StringIO import StringIO
 
-from nose.tools import assert_true, assert_equal, assert_raises
+from nose.tools import assert_true, assert_equal
 from numpy.testing import assert_array_equal
 from datetime import datetime
 from smartdispatch import utils
