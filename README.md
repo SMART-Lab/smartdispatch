@@ -29,7 +29,7 @@ The output/error logs in are saved in the folder `./SMART_DISPATCH_LOGS/{job_id}
 ###Using a pool of workers
 `smart_dispatch.py -q qtest@mp2 -p 2 launch python my_script.py "1 2" 80 "tanh sigmoid" 0.1`
 
-This will behave exactly the same way as the basic example above but the number of commands launched on the supercomputer will be 2 instead of 4 and each job will be in charge of running 2 commands each.
+This will behave exactly the same way as the basic example above but the number of jobs launched on the supercomputer will be 2 instead of 4 and each job will be in charge of running 2 commands each.
 
 
 ###Resuming a job (if launched using pool of workers)
