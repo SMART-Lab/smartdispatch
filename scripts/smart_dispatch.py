@@ -64,6 +64,9 @@ def main():
 
     # Add redirect for output and error logs
     for i, command in enumerate(commands):
+        # Change directory before executing command
+        commands[i] = 'cd "{cwd}"; '.format(cwd=os.getcwd()) + commands[i]
+        # Log command's output and command's error
         log_filename = os.path.join(path_job_logs, smartdispatch.generate_name_from_command(command, max_length_arg=30))
         commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
         commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
