@@ -72,6 +72,10 @@ def test_get_commands_from_file():
     fileobj = StringIO("\n".join(commands))
     assert_array_equal(smartdispatch.get_commands_from_file(fileobj), commands)
 
+    # Test stripping last line if empty
+    fileobj = StringIO("\n".join(commands) + "\n")
+    assert_array_equal(smartdispatch.get_commands_from_file(fileobj), commands)
+
 
 def test_get_commands_from_arguments():
     # Test single unfolded arguments

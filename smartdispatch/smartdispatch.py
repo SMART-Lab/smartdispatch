@@ -95,7 +95,7 @@ def get_commands_from_file(fileobj):
     commands : list of str
         commands read from the file
     '''
-    return fileobj.read().split('\n')
+    return fileobj.read().strip().split('\n')
 
 
 def get_commands_from_arguments(arguments):
