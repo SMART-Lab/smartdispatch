@@ -1,7 +1,7 @@
 {
     "k20": {
         "ram": 64,
-        "modules": ["CUDAToolkit/6.0"],
+        "modules": ["CUDA_Toolkit/6.0"],
         "cores": 16,
         "max_walltime": "30:00:00:00",
         "gpus": 2,
