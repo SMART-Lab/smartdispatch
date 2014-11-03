@@ -79,20 +79,38 @@ def test_get_commands_from_file():
 
 def test_get_commands_from_arguments():
     # Test single unfolded arguments
-    args = [["arg"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["arg"])
+    args = "ls"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["ls"])
 
-    args = [["args1_a", "args1_b"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1_a", "args1_b"])
+    args = "echo 1"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo 1"])
+
+    args = "echo [1 2]"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo 1", "echo 2"])
 
     # Test multiple unfolded arguments
-    args = [["args1"], ["args2"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1 args2"])
+    args = "python my_command.py [0.01 0.000001 0.00000000001] -1 [omicron mu]"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 omicron",
+                                                                   "python my_command.py 0.01 -1 mu",
+                                                                   "python my_command.py 0.000001 -1 omicron",
+                                                                   "python my_command.py 0.000001 -1 mu",
+                                                                   "python my_command.py 0.00000000001 -1 omicron",
+                                                                   "python my_command.py 0.00000000001 -1 mu"])
 
-    args = [["args1_a", "args1_b", "args1_c"], ["args2_a", "args2_b"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1_a args2_a", "args1_a args2_b",
-                                                                   "args1_b args2_a", "args1_b args2_b",
-                                                                   "args1_c args2_a", "args1_c args2_b"])
+    # Test multiple unfolded arguments and not unfoldable brackets
+    args = "python my_command.py [0.01 0.000001 0.00000000001] -1 [[42 133,666]] slow [omicron mu]"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 [42] slow omicron",
+                                                                   "python my_command.py 0.01 -1 [42] slow mu",
+                                                                   "python my_command.py 0.01 -1 [133,666] slow omicron",
+                                                                   "python my_command.py 0.01 -1 [133,666] slow mu",
+                                                                   "python my_command.py 0.000001 -1 [42] slow omicron",
+                                                                   "python my_command.py 0.000001 -1 [42] slow mu",
+                                                                   "python my_command.py 0.000001 -1 [133,666] slow omicron",
+                                                                   "python my_command.py 0.000001 -1 [133,666] slow mu",
+                                                                   "python my_command.py 0.00000000001 -1 [42] slow omicron",
+                                                                   "python my_command.py 0.00000000001 -1 [42] slow mu",
+                                                                   "python my_command.py 0.00000000001 -1 [133,666] slow omicron",
+                                                                   "python my_command.py 0.00000000001 -1 [133,666] slow mu"])
 
 
 def test_unfold_argument():

@@ -38,7 +38,7 @@ def main():
             # Commands that needs to be parsed and unfolded.
             arguments = map(smartdispatch.unfold_argument, args.commandAndOptions)
             jobname = smartdispatch.generate_name_from_arguments(arguments, max_length=235)
-            commands = smartdispatch.get_commands_from_arguments(arguments)
+            commands = smartdispatch.get_commands_from_arguments(" ".join9args.commandAndOptions)
 
         commands = smartdispatch.replace_uid_tag(commands)
 
