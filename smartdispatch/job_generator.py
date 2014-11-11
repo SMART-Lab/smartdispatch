@@ -110,14 +110,14 @@ class MammouthJobGenerator(JobGenerator):
 class GuilliminJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        return JobGenerator.generate_pbs_with_account_name_from_env('HOME_GROUP')
+        return self.generate_pbs_with_account_name_from_env('HOME_GROUP')
 
 
 # https://wiki.calculquebec.ca/w/Ex%C3%A9cuter_une_t%C3%A2che#tab=tab6
 class HeliosJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = JobGenerator.generate_pbs_with_account_name_from_env('RAP')
+        pbs_list = self.generate_pbs_with_account_name_from_env('RAP')
 
         for pbs in pbs_list:
             # Remove forbidden ppn option. Default is 5 cores per 2 gpu.
