@@ -6,4 +6,5 @@
         "max_walltime": "12:00:00",
         "gpus": 8,
         "nodes": 15
+    }
 }

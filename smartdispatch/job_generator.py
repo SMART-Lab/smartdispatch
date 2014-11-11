@@ -98,7 +98,7 @@ class JobGenerator(object):
 class MammouthJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = JobGenerator.generate_pbs()
+        pbs_list = JobGenerator.generate_pbs(self)
 
         if self.queue.name.endswith("@mp2"):
             for pbs in pbs_list:
