@@ -83,7 +83,7 @@ class JobGenerator(object):
         return pbs_filenames
 
     def generate_pbs_with_account_name_from_env(self, environment_variable_name):
-        pbs_list = JobGenerator.generate_pbs()
+        pbs_list = self.generate_pbs()
 
         if environment_variable_name not in os.environ:
             raise ValueError("Undefined environment variable: ${}. Please, provide your account name!".format(environment_variable_name))
