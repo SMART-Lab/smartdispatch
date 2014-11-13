@@ -74,4 +74,6 @@ def detect_cluster():
         cluster_name = "mammouth"
     elif server_name.split('.')[-1] == 'guil':
         cluster_name = "guillimin"
+    elif server_name.split('.')[-1] == 'helios':
+        cluster_name = "helios"
     return cluster_name

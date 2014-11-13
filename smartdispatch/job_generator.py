@@ -11,6 +11,8 @@ def job_generator_factory(queue, commands, command_params={}, cluster_name=None)
         return GuilliminJobGenerator(queue, commands, command_params)
     elif cluster_name == "mammouth":
         return MammouthJobGenerator(queue, commands, command_params)
+    elif cluster_name == "helios":
+        return HeliosJobGenerator(queue, commands, command_params)
 
     return JobGenerator(queue, commands, command_params)
 
@@ -80,11 +82,23 @@ class JobGenerator(object):
 
         return pbs_filenames
 
+    def generate_pbs_with_account_name_from_env(self, environment_variable_name):
+        pbs_list = JobGenerator.generate_pbs(self)
+
+        if environment_variable_name not in os.environ:
+            raise ValueError("Undefined environment variable: ${}. Please, provide your account name!".format(environment_variable_name))
+
+        account_name = os.path.basename(os.path.realpath(os.getenv(environment_variable_name)))
+        for pbs in pbs_list:
+            pbs.add_options(A=account_name)
+
+        return pbs_list
+
 
 class MammouthJobGenerator(JobGenerator):
 
-    def generate_pbs(self, *args, **kwargs):
-        pbs_list = JobGenerator.generate_pbs(self, *args, **kwargs)
+    def generate_pbs(self):
+        pbs_list = JobGenerator.generate_pbs(self)
 
         if self.queue.name.endswith("@mp2"):
             for pbs in pbs_list:
@@ -95,14 +109,23 @@ class MammouthJobGenerator(JobGenerator):
 
 class GuilliminJobGenerator(JobGenerator):
 
-    def generate_pbs(self, *args, **kwargs):
-        pbs_list = JobGenerator.generate_pbs(self, *args, **kwargs)
+    def generate_pbs(self):
+        return self.generate_pbs_with_account_name_from_env('HOME_GROUP')
 
-        if 'HOME_GROUP' not in os.environ:
-            raise ValueError("Undefined environment variable: $HOME_GROUP. Please, provide your account name if on Guillimin!")
 
-        account_name = os.path.split(os.getenv('HOME_GROUP', ''))[-1]
+# https://wiki.calculquebec.ca/w/Ex%C3%A9cuter_une_t%C3%A2che#tab=tab6
+class HeliosJobGenerator(JobGenerator):
+
+    def generate_pbs(self):
+        pbs_list = self.generate_pbs_with_account_name_from_env('RAP')
+
         for pbs in pbs_list:
-            pbs.add_options(A=account_name)
+            # Remove forbidden ppn option. Default is 5 cores per 2 gpu.
+            pbs.resources['nodes'] = re.sub(":ppn=[0-9]+", "", pbs.resources['nodes'])
+
+            # Nb of GPUs has to be a multiple of 2
+            nb_gpus = int(re.findall("gpus=([0-9]+)", pbs.resources['nodes'])[0])
+            if nb_gpus % 2 != 0:
+                pbs.resources['nodes'] = re.sub("gpus=[0-9]+", "gpus={0}".format(nb_gpus+1), pbs.resources['nodes'])
 
         return pbs_list

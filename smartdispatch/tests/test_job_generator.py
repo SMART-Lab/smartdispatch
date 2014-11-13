@@ -1,8 +1,8 @@
-from nose.tools import assert_true, assert_equal, assert_raises
+from nose.tools import assert_true, assert_false, assert_equal, assert_raises
 
 import os
 from smartdispatch.queue import Queue
-from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator, MammouthJobGenerator
+from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator, MammouthJobGenerator, HeliosJobGenerator
 from smartdispatch.job_generator import job_generator_factory
 import unittest
 import tempfile
@@ -112,6 +112,7 @@ class TestGuilliminQueue(TestJobGenerator):
 
 
 class TestMammouthQueue(unittest.TestCase):
+
     def setUp(self):
         self.commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
         self.queue = Queue("qtest@mp2", "mammouth")
@@ -120,6 +121,48 @@ class TestMammouthQueue(unittest.TestCase):
         job_generator = MammouthJobGenerator(self.queue, self.commands)
 
         assert_true("ppn=1" in job_generator.generate_pbs()[0].__str__())
+
+
+class TestHeliosQueue(unittest.TestCase):
+
+    def setUp(self):
+        self.commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
+        self.queue = Queue("maint", "helios")
+
+        self.env_val = 'RAP'
+
+        self.bak_env_home_group = os.environ.get(self.env_val)
+        if self.bak_env_home_group is not None:
+            del os.environ[self.env_val]
+        os.environ[self.env_val] = "/rap/group/"
+
+        self.job_generator = HeliosJobGenerator(self.queue, self.commands)
+
+    def tearDown(self):
+        if self.bak_env_home_group is not None:
+            os.environ[self.env_val] = self.bak_env_home_group
+
+    def test_generate_pbs_invalid_group(self):
+        del os.environ[self.env_val]
+
+        assert_raises(ValueError, self.job_generator.generate_pbs)
+
+    def test_generate_pbs_valid_group(self):
+        pbs = self.job_generator.generate_pbs()[0]
+
+        assert_equal(pbs.options['-A'], "group")
+
+    def test_generate_pbs_ppn_is_absent(self):
+        assert_false("ppn=" in self.job_generator.generate_pbs()[0].__str__())
+
+    def test_generate_pbs_even_nb_commands(self):
+        assert_true("gpus=4" in self.job_generator.generate_pbs()[0].__str__())
+
+    def test_generate_pbs_odd_nb_commands(self):
+        commands = ["echo 1", "echo 2", "echo 3", "echo 4", "echo 5"]
+        job_generator = HeliosJobGenerator(self.queue, commands)
+
+        assert_true("gpus=6" in job_generator.generate_pbs()[0].__str__())
 
 
 def test_job_generator_factory():
@@ -131,6 +174,11 @@ def test_job_generator_factory():
     job_generator = job_generator_factory(queue, commands, cluster_name="mammouth")
     assert_true(isinstance(job_generator, MammouthJobGenerator))
 
+    job_generator = job_generator_factory(queue, commands, cluster_name="helios")
+    assert_true(isinstance(job_generator, HeliosJobGenerator))
+
     job_generator = job_generator_factory(queue, commands, cluster_name=None)
     assert_true(isinstance(job_generator, JobGenerator))
     assert_true(not isinstance(job_generator, GuilliminJobGenerator))
+    assert_true(not isinstance(job_generator, MammouthJobGenerator))
+    assert_true(not isinstance(job_generator, HeliosJobGenerator))

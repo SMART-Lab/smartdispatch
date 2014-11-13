@@ -1,0 +1,10 @@
+{
+    "maint": {
+        "ram": 128,
+        "modules": ["cuda/6.0.37"],
+        "cores": 20,
+        "max_walltime": "12:00:00",
+        "gpus": 8,
+        "nodes": 15
+    }
+}
