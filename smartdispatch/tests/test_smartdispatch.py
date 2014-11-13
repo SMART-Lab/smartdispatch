@@ -88,6 +88,15 @@ def test_get_commands_from_arguments():
     args = "echo [1 2]"
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo 1", "echo 2"])
 
+    args = "echo test [1 2] yay"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo test 1 yay", "echo test 2 yay"])
+
+    args = "echo test[1 2]"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo test1", "echo test2"])
+
+    args = "echo test[1 2]yay"
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo test1yay", "echo test2yay"])
+
     # Test multiple unfolded arguments
     args = "python my_command.py [0.01 0.000001 0.00000000001] -1 [omicron mu]"
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 omicron",
