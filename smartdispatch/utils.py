@@ -35,6 +35,24 @@ def slugify(value):
     return str(re.sub('[-\s]+', '_', value))
 
 
+def escape(text, escaping_character="\\"):
+    """ Escape the escaped character using its hex representation """
+    def hexify(match):
+        return "\\x{0}".format(match.group()[-1].encode("hex"))
+
+    return re.sub(r"\\.", hexify, text)
+
+
+def hex2str(text):
+    """ Convert hex representation to the character it represents """
+    if len(text) == 0:
+        return ''
+
+    def unhexify(match):
+        return match.group()[2:].decode("hex")
+
+    return re.sub(r"\\x..", unhexify, text)
+
 @contextmanager
 def open_with_lock(*args, **kwargs):
     """ Context manager for opening file with an exclusive lock. """

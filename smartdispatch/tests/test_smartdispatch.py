@@ -78,27 +78,28 @@ def test_get_commands_from_file():
 
 
 def test_get_commands_from_arguments():
-    # Test single unfolded arguments
-    args = "ls"
+    # Test with one argument
+    args = [["ls"]]
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["ls"])
 
-    args = "echo 1"
+    args = [["echo 1"]]
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo 1"])
 
-    args = "echo [1 2]"
+    # Test two arguments
+    args = smartdispatch.unfold_arguments(["echo [1,2]"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo 1", "echo 2"])
 
-    args = "echo test [1 2] yay"
+    args = smartdispatch.unfold_arguments(["echo test [1,2] yay"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo test 1 yay", "echo test 2 yay"])
 
-    args = "echo test[1 2]"
+    args = smartdispatch.unfold_arguments(["echo test[1,2]"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo test1", "echo test2"])
 
-    args = "echo test[1 2]yay"
+    args = smartdispatch.unfold_arguments(["echo test[1,2]yay"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["echo test1yay", "echo test2yay"])
 
-    # Test multiple unfolded arguments
-    args = "python my_command.py [0.01 0.000001 0.00000000001] -1 [omicron mu]"
+    # Test multiple folded arguments
+    args = smartdispatch.unfold_arguments(["python my_command.py", "[0.01,0.000001,0.00000000001]", "-1", "[omicron,mu]"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 omicron",
                                                                    "python my_command.py 0.01 -1 mu",
                                                                    "python my_command.py 0.000001 -1 omicron",
@@ -107,7 +108,7 @@ def test_get_commands_from_arguments():
                                                                    "python my_command.py 0.00000000001 -1 mu"])
 
     # Test multiple unfolded arguments and not unfoldable brackets
-    args = "python my_command.py [0.01 0.000001 0.00000000001] -1 [[42 133,666]] slow [omicron mu]"
+    args = smartdispatch.unfold_arguments(["python my_command.py [0.01,0.000001,0.00000000001] -1 \[[42,133\,666]\] slow [omicron,mu]"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 [42] slow omicron",
                                                                    "python my_command.py 0.01 -1 [42] slow mu",
                                                                    "python my_command.py 0.01 -1 [133,666] slow omicron",
@@ -120,16 +121,6 @@ def test_get_commands_from_arguments():
                                                                    "python my_command.py 0.00000000001 -1 [42] slow mu",
                                                                    "python my_command.py 0.00000000001 -1 [133,666] slow omicron",
                                                                    "python my_command.py 0.00000000001 -1 [133,666] slow mu"])
-
-
-def test_unfold_argument():
-    # Test simple argument
-    for arg in ["arg1", "[arg1"]:
-        assert_array_equal(smartdispatch.unfold_argument(arg), [arg])
-
-    # Test list (space)
-    for arg in ["arg1 arg2", "arg1 ", " arg1"]:
-        assert_array_equal(smartdispatch.unfold_argument(arg), arg.split(" "))
 
 
 def test_replace_uid_tag():

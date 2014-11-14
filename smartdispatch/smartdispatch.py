@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 
 import os
+import re
+import itertools
 from datetime import datetime
 
 import smartdispatch
 from smartdispatch import utils
+from smartdispatch.argument import EnumerationArgument, RangeArgument
 
 UID_TAG = "{UID}"
 
@@ -98,48 +101,29 @@ def get_commands_from_file(fileobj):
 
 
 def get_commands_from_arguments(arguments):
-    unfolded_commands = [arguments]
-    unfolded_commands_stard_idx = [0]
-
-    while True:
-        new_unfolded_commands = []
-        new_unfolded_commands_stard_idx = []
-
-        for idx in range(len(unfolded_commands)):
-            start_bracket_idx = unfolded_commands[idx].find("[", unfolded_commands_stard_idx[idx])
-
-            if start_bracket_idx == -1:
-                new_unfolded_commands_stard_idx = [-1]
-                break
-
-            while unfolded_commands[idx][start_bracket_idx + 1] == "[":
-                start_bracket_idx += 1
-
-            stop_bracket_idx = unfolded_commands[idx].find("]", start_bracket_idx)
-
-            for argument in unfolded_commands[idx][start_bracket_idx + 1:stop_bracket_idx].split(" "):
-                new_unfolded_commands_stard_idx += [start_bracket_idx + len(argument)]
-                new_unfolded_commands += [unfolded_commands[idx][0:start_bracket_idx] + argument + unfolded_commands[idx][stop_bracket_idx + 1:]]
-
-        if -1 in new_unfolded_commands_stard_idx:
-            break
-
-        unfolded_commands = new_unfolded_commands
-        unfolded_commands_stard_idx = new_unfolded_commands_stard_idx
-
-    return unfolded_commands
+    ''' Obtains commands from the product of every unfolded arguments.
+    Parameters
+    ----------
+    arguments : list of list of str
+        list of unfolded arguments
+    Returns
+    -------
+    commands : list of str
+        commands resulting from the product of every unfolded arguments
+    '''
+    return ["".join(argvalues) for argvalues in itertools.product(*arguments)]
 
 
-def unfold_argument(argument):
-    ''' Unfolds a folded argument into a list of unfolded arguments.
+def unfold_arguments(arguments):
+    ''' Unfolds folded arguments into a list of unfolded arguments.
 
-    An argument can be folded e.g. a list of unfolded arguments separated by spaces.
+    An argument can be folded e.g. a list of unfolded arguments separated by commas.
     An unfolded argument unfolds to itself.
 
     Parameters
     ----------
-    argument : str
-        argument to unfold
+    arguments : list of str
+        arguments to unfold
 
     Returns
     -------
@@ -148,11 +132,34 @@ def unfold_argument(argument):
 
     Complex arguments
     -----------------
-    *list (space)*: "item1 item2 ... itemN"
+    *enumeration*: "[item1,item2,...,itemN]"
+    *range*: "[start:end]" or "[start:end:step]"
     '''
+    text = utils.escape(" ".join(arguments))
 
-    # Suppose `argument`is a space separated list
-    return argument.split(" ")
+    # Order matter, if some regex is more greedy than another, the it should go after
+    arguments = [EnumerationArgument(), RangeArgument()]
+
+    # Build the master regex with all argument's regex
+    regex = "(" + "|".join(["(?P<{0}>{1})".format(arg.name, arg.regex) for arg in arguments]) + ")"
+
+    pos = 0
+    unfolded_arguments = []
+    for match in re.finditer(regex, text):
+        # Add already unfolded argument
+        unfolded_arguments.append([text[pos:match.start()]])
+
+        # Unfold argument
+        groupdict = match.groupdict()
+        for argument in arguments:
+            if groupdict[argument.name] is not None:
+                unfolded_arguments.append(argument.unfold(groupdict[argument.name]))
+
+        pos = match.end()
+
+    unfolded_arguments.append([text[pos:]])  # Add remaining unfolded arguments
+    unfolded_arguments = [map(utils.hex2str, argvalues) for argvalues in unfolded_arguments]
+    return unfolded_arguments
 
 
 def replace_uid_tag(commands):
