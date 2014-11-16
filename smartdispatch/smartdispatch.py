@@ -7,7 +7,7 @@ from datetime import datetime
 
 import smartdispatch
 from smartdispatch import utils
-from smartdispatch.argument import EnumerationArgument, RangeArgument
+from smartdispatch.argument import EnumerationFoldedArgument, RangeFoldedArgument
 
 UID_TAG = "{UID}"
 
@@ -138,7 +138,7 @@ def unfold_arguments(arguments):
     text = utils.escape(" ".join(arguments))
 
     # Order matter, if some regex is more greedy than another, the it should go after
-    arguments = [RangeArgument(), EnumerationArgument()]
+    arguments = [RangeFoldedArgument(), EnumerationFoldedArgument()]
 
     # Build the master regex with all argument's regex
     regex = "(" + "|".join(["(?P<{0}>{1})".format(arg.name, arg.regex) for arg in arguments]) + ")"

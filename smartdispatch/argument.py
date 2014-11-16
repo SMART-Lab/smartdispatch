@@ -1,7 +1,7 @@
 import re
 
 
-class Argument(object):
+class FoldedArgument(object):
     def __init__(self):
         self.name = ""
         self.regex = ""
@@ -10,7 +10,7 @@ class Argument(object):
         raise NotImplementedError("Subclass must implement this method!")
 
 
-class EnumerationArgument(object):
+class EnumerationFoldedArgument(FoldedArgument):
     def __init__(self):
         self.name = "enumeration"
         self.regex = "\[[^]]*\]"
@@ -19,14 +19,14 @@ class EnumerationArgument(object):
         return match[1:-1].split(' ')
 
 
-class RangeArgument(object):
+class RangeFoldedArgument(FoldedArgument):
     def __init__(self):
         self.name = "range"
-        self.regex = "\[\d+:\d+(:\d+)?\]"
+        self.regex = "\[(\d+):(\d+)(?::(\d+))?\]"
 
     def unfold(self, match):
         groups = re.search(self.regex, match).groups()
         start = int(groups[0])
         end = int(groups[1])
         step = 1 if groups[2] is None else int(groups[2])
-        return range(start, end, step)
+        return map(str, range(start, end, step))
