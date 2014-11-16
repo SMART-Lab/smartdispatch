@@ -16,7 +16,7 @@ class EnumerationArgument(object):
         self.regex = "\[[^]]*\]"
 
     def unfold(self, match):
-        return match[1:-1].split(',')
+        return match[1:-1].split(' ')
 
 
 class RangeArgument(object):

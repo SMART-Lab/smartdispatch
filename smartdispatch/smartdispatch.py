@@ -132,13 +132,13 @@ def unfold_arguments(arguments):
 
     Complex arguments
     -----------------
-    *enumeration*: "[item1,item2,...,itemN]"
+    *enumeration*: "[item1 item2 ... itemN]"
     *range*: "[start:end]" or "[start:end:step]"
     '''
     text = utils.escape(" ".join(arguments))
 
     # Order matter, if some regex is more greedy than another, the it should go after
-    arguments = [EnumerationArgument(), RangeArgument()]
+    arguments = [RangeArgument(), EnumerationArgument()]
 
     # Build the master regex with all argument's regex
     regex = "(" + "|".join(["(?P<{0}>{1})".format(arg.name, arg.regex) for arg in arguments]) + ")"
