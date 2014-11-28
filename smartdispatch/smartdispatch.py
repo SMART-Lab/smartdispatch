@@ -7,7 +7,7 @@ from datetime import datetime
 
 import smartdispatch
 from smartdispatch import utils
-from smartdispatch.folded_argument_template import ListFoldedArgumentTemplate, RangeFoldedArgumentTemplate
+from smartdispatch.argument_template import argument_templates
 
 UID_TAG = "{UID}"
 
@@ -100,65 +100,47 @@ def get_commands_from_file(fileobj):
     return fileobj.read().strip().split('\n')
 
 
-def get_commands_from_arguments(arguments):
-    ''' Obtains commands from the product of every unfolded arguments.
+def unfold_command(command):
+    ''' Unfolds a command into a list of unfolded commands.
+
+    Unfolding is performed for every folded arguments (see *Arguments templates*)
+    found in `command`. Then, resulting commands are generated using the product
+    of every unfolded arguments.
+
     Parameters
     ----------
-    arguments : list of list of str
-        list of unfolded arguments
+    command : list of str
+        command to unfold
+
     Returns
     -------
     commands : list of str
-        commands resulting from the product of every unfolded arguments
-    '''
-    return ["".join(argvalues) for argvalues in itertools.product(*arguments)]
+        commands obtained after unfolding `command`
 
-
-def unfold_arguments(arguments):
-    ''' Unfolds folded arguments into a list of unfolded arguments.
-
-    An argument can be folded e.g. a list of unfolded arguments separated by spaces.
-    An unfolded argument unfolds to itself.
-
-    Parameters
-    ----------
-    arguments : list of str
-        arguments to unfold
-
-    Returns
-    -------
-    unfolded_arguments : list of str
-        result of the unfolding
-
-    Complex arguments
-    -----------------
+    Arguments template
+    ------------------
     *list*: "[item1 item2 ... itemN]"
     *range*: "[start:end]" or "[start:end:step]"
     '''
-    text = utils.encode_escaped_characters(" ".join(arguments))
-
-    # Order matter, if some regex is more greedy than another, the it should go after
-    folded_argument_templates = [RangeFoldedArgumentTemplate(), ListFoldedArgumentTemplate()]
-    folded_argument_templates_dict = {arg.name: arg for arg in folded_argument_templates}
+    text = utils.encode_escaped_characters(command)
 
     # Build the master regex with all argument's regex
-    regex = "(" + "|".join(["(?P<{0}>{1})".format(arg.name, arg.regex) for arg in folded_argument_templates]) + ")"
+    regex = "(" + "|".join(["(?P<{0}>{1})".format(name, arg.regex) for name, arg in argument_templates.items()]) + ")"
 
     pos = 0
-    unfolded_arguments = []
+    arguments = []
     for match in re.finditer(regex, text):
         # Add already unfolded argument
-        unfolded_arguments.append([text[pos:match.start()]])
+        arguments.append([text[pos:match.start()]])
 
         # Unfold argument
-        folded_argument_template_name, matched_text = [(k, v) for k, v in match.groupdict().items() if v is not None][0]
-        folded_argument_template = folded_argument_templates_dict[folded_argument_template_name]
-        unfolded_arguments.append(folded_argument_template.unfold(matched_text))
+        argument_template_name, matched_text = next((k, v) for k, v in match.groupdict().items() if v is not None)
+        arguments.append(argument_templates[argument_template_name].unfold(matched_text))
         pos = match.end()
 
-    unfolded_arguments.append([text[pos:]])  # Add remaining unfolded arguments
-    unfolded_arguments = [map(utils.decode_escaped_characters, argvalues) for argvalues in unfolded_arguments]
-    return unfolded_arguments
+    arguments.append([text[pos:]])  # Add remaining unfolded arguments
+    arguments = [map(utils.decode_escaped_characters, argvalues) for argvalues in arguments]
+    return ["".join(argvalues) for argvalues in itertools.product(*arguments)]
 
 
 def replace_uid_tag(commands):

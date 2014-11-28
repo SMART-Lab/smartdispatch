@@ -1,14 +1,13 @@
-from nose.tools import assert_equal, assert_true
+import re
+from nose.tools import assert_true
 from numpy.testing import assert_array_equal
 
-from smartdispatch.folded_argument_template import ListFoldedArgumentTemplate, RangeFoldedArgumentTemplate
-
-import re
+from smartdispatch.argument_template import ListArgumentTemplate, RangeArgumentTemplate
 
 
-def test_list_folded_argument_template():
+def test_list_argument_template():
     # Test valid enumeration folded arguments
-    arg = ListFoldedArgumentTemplate()
+    arg = ListArgumentTemplate()
     folded_arguments = [("[]", [""]),
                         ("[1]", ["1"]),
                         ("[1 ]", ["1", ""]),
@@ -24,8 +23,8 @@ def test_list_folded_argument_template():
     assert_true(re.match(arg.regex, "[1 2 3") is None)
 
 
-def test_range_folded_argument_template():
-    arg = RangeFoldedArgumentTemplate()
+def test_range_argument_template():
+    arg = RangeArgumentTemplate()
     folded_arguments = [("[1:4]", ["1", "2", "3"]),
                         ("[1:4:2]", ["1", "3"]),
                         ]

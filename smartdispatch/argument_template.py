@@ -1,27 +1,33 @@
 import re
+from collections import OrderedDict
 
 
-class FoldedArgumentTemplate(object):
+def build_argument_templates_dictionnary():
+    # Order matter, if some regex is more greedy than another, the it should go after
+    argument_templates = OrderedDict()
+    argument_templates[RangeArgumentTemplate.__name__] = RangeArgumentTemplate()
+    argument_templates[ListArgumentTemplate.__name__] = ListArgumentTemplate()
+    return argument_templates
+
+
+class ArgumentTemplate(object):
     def __init__(self):
-        self.name = ""
         self.regex = ""
 
     def unfold(self, match):
         raise NotImplementedError("Subclass must implement method `unfold(self, match)`!")
 
 
-class ListFoldedArgumentTemplate(FoldedArgumentTemplate):
+class ListArgumentTemplate(ArgumentTemplate):
     def __init__(self):
-        self.name = "list"
         self.regex = "\[[^]]*\]"
 
     def unfold(self, match):
         return match[1:-1].split(' ')
 
 
-class RangeFoldedArgumentTemplate(FoldedArgumentTemplate):
+class RangeArgumentTemplate(ArgumentTemplate):
     def __init__(self):
-        self.name = "range"
         self.regex = "\[(\d+):(\d+)(?::(\d+))?\]"
 
     def unfold(self, match):
@@ -30,3 +36,6 @@ class RangeFoldedArgumentTemplate(FoldedArgumentTemplate):
         end = int(groups[1])
         step = 1 if groups[2] is None else int(groups[2])
         return map(str, range(start, end, step))
+
+
+argument_templates = build_argument_templates_dictionnary()
