@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 
 import os
+import re
 import itertools
 from datetime import datetime
 
 import smartdispatch
 from smartdispatch import utils
+from smartdispatch.argument_template import argument_templates
 
 UID_TAG = "{UID}"
 
@@ -98,45 +100,47 @@ def get_commands_from_file(fileobj):
     return fileobj.read().strip().split('\n')
 
 
-def get_commands_from_arguments(arguments):
-    ''' Obtains commands from the product of every unfolded arguments.
+def unfold_command(command):
+    ''' Unfolds a command into a list of unfolded commands.
+
+    Unfolding is performed for every folded arguments (see *Arguments templates*)
+    found in `command`. Then, resulting commands are generated using the product
+    of every unfolded arguments.
 
     Parameters
     ----------
-    arguments : list of list of str
-        list of unfolded arguments
+    command : list of str
+        command to unfold
 
     Returns
     -------
     commands : list of str
-        commands resulting from the product of every unfolded arguments
+        commands obtained after unfolding `command`
+
+    Arguments template
+    ------------------
+    *list*: "[item1 item2 ... itemN]"
+    *range*: "[start:end]" or "[start:end:step]"
     '''
-    return [" ".join(argvalues) for argvalues in itertools.product(*arguments)]
+    text = utils.encode_escaped_characters(command)
 
+    # Build the master regex with all argument's regex
+    regex = "(" + "|".join(["(?P<{0}>{1})".format(name, arg.regex) for name, arg in argument_templates.items()]) + ")"
 
-def unfold_argument(argument):
-    ''' Unfolds a folded argument into a list of unfolded arguments.
+    pos = 0
+    arguments = []
+    for match in re.finditer(regex, text):
+        # Add already unfolded argument
+        arguments.append([text[pos:match.start()]])
 
-    An argument can be folded e.g. a list of unfolded arguments separated by spaces.
-    An unfolded argument unfolds to itself.
+        # Unfold argument
+        argument_template_name, matched_text = next((k, v) for k, v in match.groupdict().items() if v is not None)
+        arguments.append(argument_templates[argument_template_name].unfold(matched_text))
+        pos = match.end()
 
-    Parameters
-    ----------
-    argument : str
-        argument to unfold
-
-    Returns
-    -------
-    unfolded_arguments : list of str
-        result of the unfolding
-
-    Complex arguments
-    -----------------
-    *list (space)*: "item1 item2 ... itemN"
-    '''
-
-    # Suppose `argument`is a space separated list
-    return argument.split(" ")
+    arguments.append([text[pos:]])  # Add remaining unfolded arguments
+    arguments = [map(utils.decode_escaped_characters, argvalues) for argvalues in arguments]
+    return ["".join(argvalues) for argvalues in itertools.product(*arguments)]
 
 
 def replace_uid_tag(commands):

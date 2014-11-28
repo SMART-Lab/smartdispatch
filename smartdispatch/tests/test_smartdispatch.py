@@ -77,32 +77,71 @@ def test_get_commands_from_file():
     assert_array_equal(smartdispatch.get_commands_from_file(fileobj), commands)
 
 
-def test_get_commands_from_arguments():
-    # Test single unfolded arguments
-    args = [["arg"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["arg"])
+def test_unfold_command():
+    # Test with one argument
+    cmd = "ls"
+    assert_equal(smartdispatch.unfold_command(cmd), ["ls"])
 
-    args = [["args1_a", "args1_b"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1_a", "args1_b"])
+    cmd = "echo 1"
+    assert_equal(smartdispatch.unfold_command(cmd), ["echo 1"])
 
-    # Test multiple unfolded arguments
-    args = [["args1"], ["args2"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1 args2"])
+    # Test two arguments
+    cmd = "echo [1 2]"
+    assert_equal(smartdispatch.unfold_command(cmd), ["echo 1", "echo 2"])
 
-    args = [["args1_a", "args1_b", "args1_c"], ["args2_a", "args2_b"]]
-    assert_equal(smartdispatch.get_commands_from_arguments(args), ["args1_a args2_a", "args1_a args2_b",
-                                                                   "args1_b args2_a", "args1_b args2_b",
-                                                                   "args1_c args2_a", "args1_c args2_b"])
+    cmd = "echo test [1 2] yay"
+    assert_equal(smartdispatch.unfold_command(cmd), ["echo test 1 yay", "echo test 2 yay"])
 
+    cmd = "echo test[1 2]"
+    assert_equal(smartdispatch.unfold_command(cmd), ["echo test1", "echo test2"])
 
-def test_unfold_argument():
-    # Test simple argument
-    for arg in ["arg1", "[arg1"]:
-        assert_array_equal(smartdispatch.unfold_argument(arg), [arg])
+    cmd = "echo test[1 2]yay"
+    assert_equal(smartdispatch.unfold_command(cmd), ["echo test1yay", "echo test2yay"])
 
-    # Test list (space)
-    for arg in ["arg1 arg2", "arg1 ", " arg1"]:
-        assert_array_equal(smartdispatch.unfold_argument(arg), arg.split(" "))
+    # Test multiple folded arguments
+    cmd = "python my_command.py [0.01 0.000001 0.00000000001] -1 [omicron mu]"
+    assert_equal(smartdispatch.unfold_command(cmd), ["python my_command.py 0.01 -1 omicron",
+                                                     "python my_command.py 0.01 -1 mu",
+                                                     "python my_command.py 0.000001 -1 omicron",
+                                                     "python my_command.py 0.000001 -1 mu",
+                                                     "python my_command.py 0.00000000001 -1 omicron",
+                                                     "python my_command.py 0.00000000001 -1 mu"])
+
+    # Test multiple folded arguments and not unfoldable brackets
+    cmd = "python my_command.py [0.01 0.000001 0.00000000001] -1 \[[42 133,666]\] slow [omicron mu]"
+    assert_equal(smartdispatch.unfold_command(cmd), ["python my_command.py 0.01 -1 [42] slow omicron",
+                                                     "python my_command.py 0.01 -1 [42] slow mu",
+                                                     "python my_command.py 0.01 -1 [133,666] slow omicron",
+                                                     "python my_command.py 0.01 -1 [133,666] slow mu",
+                                                     "python my_command.py 0.000001 -1 [42] slow omicron",
+                                                     "python my_command.py 0.000001 -1 [42] slow mu",
+                                                     "python my_command.py 0.000001 -1 [133,666] slow omicron",
+                                                     "python my_command.py 0.000001 -1 [133,666] slow mu",
+                                                     "python my_command.py 0.00000000001 -1 [42] slow omicron",
+                                                     "python my_command.py 0.00000000001 -1 [42] slow mu",
+                                                     "python my_command.py 0.00000000001 -1 [133,666] slow omicron",
+                                                     "python my_command.py 0.00000000001 -1 [133,666] slow mu"])
+
+    # Test multiple different folded arguments
+    cmd = "python my_command.py [0.01 0.001] -[1:5] slow"
+    assert_equal(smartdispatch.unfold_command(cmd), ["python my_command.py 0.01 -1 slow",
+                                                     "python my_command.py 0.01 -2 slow",
+                                                     "python my_command.py 0.01 -3 slow",
+                                                     "python my_command.py 0.01 -4 slow",
+                                                     "python my_command.py 0.001 -1 slow",
+                                                     "python my_command.py 0.001 -2 slow",
+                                                     "python my_command.py 0.001 -3 slow",
+                                                     "python my_command.py 0.001 -4 slow"])
+
+    cmd = "python my_command.py -[1:5] slow [0.01 0.001]"
+    assert_equal(smartdispatch.unfold_command(cmd), ["python my_command.py -1 slow 0.01",
+                                                     "python my_command.py -1 slow 0.001",
+                                                     "python my_command.py -2 slow 0.01",
+                                                     "python my_command.py -2 slow 0.001",
+                                                     "python my_command.py -3 slow 0.01",
+                                                     "python my_command.py -3 slow 0.001",
+                                                     "python my_command.py -4 slow 0.01",
+                                                     "python my_command.py -4 slow 0.001"])
 
 
 def test_replace_uid_tag():
