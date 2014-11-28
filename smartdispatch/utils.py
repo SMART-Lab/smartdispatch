@@ -35,7 +35,7 @@ def slugify(value):
     return str(re.sub('[-\s]+', '_', value))
 
 
-def escape(text, escaping_character="\\"):
+def encode_escaped_characters(text, escaping_character="\\"):
     """ Escape the escaped character using its hex representation """
     def hexify(match):
         return "\\x{0}".format(match.group()[-1].encode("hex"))
@@ -43,7 +43,7 @@ def escape(text, escaping_character="\\"):
     return re.sub(r"\\.", hexify, text)
 
 
-def hex2str(text):
+def decode_escaped_characters(text):
     """ Convert hex representation to the character it represents """
     if len(text) == 0:
         return ''

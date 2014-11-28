@@ -1,25 +1,25 @@
 import re
 
 
-class FoldedArgument(object):
+class FoldedArgumentTemplate(object):
     def __init__(self):
         self.name = ""
         self.regex = ""
 
     def unfold(self, match):
-        raise NotImplementedError("Subclass must implement this method!")
+        raise NotImplementedError("Subclass must implement method `unfold(self, match)`!")
 
 
-class EnumerationFoldedArgument(FoldedArgument):
+class ListFoldedArgumentTemplate(FoldedArgumentTemplate):
     def __init__(self):
-        self.name = "enumeration"
+        self.name = "list"
         self.regex = "\[[^]]*\]"
 
     def unfold(self, match):
         return match[1:-1].split(' ')
 
 
-class RangeFoldedArgument(FoldedArgument):
+class RangeFoldedArgumentTemplate(FoldedArgumentTemplate):
     def __init__(self):
         self.name = "range"
         self.regex = "\[(\d+):(\d+)(?::(\d+))?\]"

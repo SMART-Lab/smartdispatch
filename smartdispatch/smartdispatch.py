@@ -7,7 +7,7 @@ from datetime import datetime
 
 import smartdispatch
 from smartdispatch import utils
-from smartdispatch.argument import EnumerationFoldedArgument, RangeFoldedArgument
+from smartdispatch.folded_argument_template import ListFoldedArgumentTemplate, RangeFoldedArgumentTemplate
 
 UID_TAG = "{UID}"
 
@@ -117,7 +117,7 @@ def get_commands_from_arguments(arguments):
 def unfold_arguments(arguments):
     ''' Unfolds folded arguments into a list of unfolded arguments.
 
-    An argument can be folded e.g. a list of unfolded arguments separated by commas.
+    An argument can be folded e.g. a list of unfolded arguments separated by spaces.
     An unfolded argument unfolds to itself.
 
     Parameters
@@ -132,16 +132,17 @@ def unfold_arguments(arguments):
 
     Complex arguments
     -----------------
-    *enumeration*: "[item1 item2 ... itemN]"
+    *list*: "[item1 item2 ... itemN]"
     *range*: "[start:end]" or "[start:end:step]"
     '''
-    text = utils.escape(" ".join(arguments))
+    text = utils.encode_escaped_characters(" ".join(arguments))
 
     # Order matter, if some regex is more greedy than another, the it should go after
-    arguments = [RangeFoldedArgument(), EnumerationFoldedArgument()]
+    folded_argument_templates = [RangeFoldedArgumentTemplate(), ListFoldedArgumentTemplate()]
+    folded_argument_templates_dict = {arg.name: arg for arg in folded_argument_templates}
 
     # Build the master regex with all argument's regex
-    regex = "(" + "|".join(["(?P<{0}>{1})".format(arg.name, arg.regex) for arg in arguments]) + ")"
+    regex = "(" + "|".join(["(?P<{0}>{1})".format(arg.name, arg.regex) for arg in folded_argument_templates]) + ")"
 
     pos = 0
     unfolded_arguments = []
@@ -150,15 +151,13 @@ def unfold_arguments(arguments):
         unfolded_arguments.append([text[pos:match.start()]])
 
         # Unfold argument
-        groupdict = match.groupdict()
-        for argument in arguments:
-            if groupdict[argument.name] is not None:
-                unfolded_arguments.append(argument.unfold(groupdict[argument.name]))
-
+        folded_argument_template_name, matched_text = [(k, v) for k, v in match.groupdict().items() if v is not None][0]
+        folded_argument_template = folded_argument_templates_dict[folded_argument_template_name]
+        unfolded_arguments.append(folded_argument_template.unfold(matched_text))
         pos = match.end()
 
     unfolded_arguments.append([text[pos:]])  # Add remaining unfolded arguments
-    unfolded_arguments = [map(utils.hex2str, argvalues) for argvalues in unfolded_arguments]
+    unfolded_arguments = [map(utils.decode_escaped_characters, argvalues) for argvalues in unfolded_arguments]
     return unfolded_arguments
 
 

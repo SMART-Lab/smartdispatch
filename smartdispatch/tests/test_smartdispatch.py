@@ -107,7 +107,7 @@ def test_get_commands_from_arguments():
                                                                    "python my_command.py 0.00000000001 -1 omicron",
                                                                    "python my_command.py 0.00000000001 -1 mu"])
 
-    # Test multiple unfolded arguments and not unfoldable brackets
+    # Test multiple folded arguments and not unfoldable brackets
     args = smartdispatch.unfold_arguments(["python my_command.py [0.01 0.000001 0.00000000001] -1 \[[42 133,666]\] slow [omicron mu]"])
     assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 [42] slow omicron",
                                                                    "python my_command.py 0.01 -1 [42] slow mu",
@@ -121,6 +121,27 @@ def test_get_commands_from_arguments():
                                                                    "python my_command.py 0.00000000001 -1 [42] slow mu",
                                                                    "python my_command.py 0.00000000001 -1 [133,666] slow omicron",
                                                                    "python my_command.py 0.00000000001 -1 [133,666] slow mu"])
+
+    # Test multiple different folded arguments
+    args = smartdispatch.unfold_arguments(["python my_command.py [0.01 0.001] -[1:5] slow"])
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py 0.01 -1 slow",
+                                                                   "python my_command.py 0.01 -2 slow",
+                                                                   "python my_command.py 0.01 -3 slow",
+                                                                   "python my_command.py 0.01 -4 slow",
+                                                                   "python my_command.py 0.001 -1 slow",
+                                                                   "python my_command.py 0.001 -2 slow",
+                                                                   "python my_command.py 0.001 -3 slow",
+                                                                   "python my_command.py 0.001 -4 slow"])
+
+    args = smartdispatch.unfold_arguments(["python my_command.py -[1:5] slow [0.01 0.001]"])
+    assert_equal(smartdispatch.get_commands_from_arguments(args), ["python my_command.py -1 slow 0.01",
+                                                                   "python my_command.py -1 slow 0.001",
+                                                                   "python my_command.py -2 slow 0.01",
+                                                                   "python my_command.py -2 slow 0.001",
+                                                                   "python my_command.py -3 slow 0.01",
+                                                                   "python my_command.py -3 slow 0.001",
+                                                                   "python my_command.py -4 slow 0.01",
+                                                                   "python my_command.py -4 slow 0.001"])
 
 
 def test_replace_uid_tag():
