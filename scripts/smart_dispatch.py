@@ -84,16 +84,18 @@ def main():
     job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME)
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
+    # Launch the jobs
     print "{nb_commands} command(s) will be executed in {nb_jobs} job(s).".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
     print "Batch UID: {batch_uid}".format(batch_uid=jobname)
-    # Launch the jobs with QSUB
     if not args.doNotLaunch:
-        job_ids = "Job id's: "
+        job_ids = []
         for pbs_filename in pbs_filenames:
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
-            job_ids += "{} ".format(qsub_output.rstrip())
-        print job_ids
+            job_ids += qsub_output.rstrip()
 
+        with utils.open_with_lock(os.path.join(path_job_commands, "job_ids.txt"), 'a') as job_ids_file:
+            job_ids_file.writelines(job_ids)
+        print "\nJob id's: {job_ids}".format(job_ids=" ".join(job_ids))
     print "\nLogs, command, and job id's related to this batch will be in: {smartdispatch_folder}/{{Batch UID}}".format(smartdispatch_folder=LOGS_FOLDERNAME)
 
 
