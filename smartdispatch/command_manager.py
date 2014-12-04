@@ -57,7 +57,3 @@ class CommandManager(object):
                         commands += commands_file.readlines()
                         commands_file.seek(0, os.SEEK_SET)
                         commands_file.writelines(commands)
-
-    def count_commands(self):
-        commands = open(self._commands_filename).readlines()
-        return len(commands)

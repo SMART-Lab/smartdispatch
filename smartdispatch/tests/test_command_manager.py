@@ -58,7 +58,7 @@ class CommandFilesTests(unittest.TestCase):
         assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
 
     def test_get_nb_commands_to_run(self):
-        assert_equal(self.command_manager.get_nb_commands_to_run(), 3)
+        assert_equal(self.command_manager.get_nb_commands_to_run(), self.nb_commands)
 
     def test_set_running_command_as_finished(self):
         # SetUp
@@ -92,13 +92,3 @@ class CommandFilesTests(unittest.TestCase):
             assert_equal(running_commands_file.read(), "")
 
         assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
-
-    def test_count_commands(self):
-        # SetUp
-        commands = ["4", "5", "6", "7"]
-
-        # The function to test
-        assert_equal(self.command_manager.count_commands(), self.nb_commands)
-
-        self.command_manager.set_commands_to_run(commands)
-        assert_equal(self.command_manager.count_commands(), len(commands) + self.nb_commands)

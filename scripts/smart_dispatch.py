@@ -36,10 +36,10 @@ def main():
             jobname = args.commandsFile.name
             commands = smartdispatch.get_commands_from_file(args.commandsFile)
         else:
-            # Commands that needs to be parsed and unfolded.
-            arguments = map(smartdispatch.unfold_argument, args.commandAndOptions)
-            jobname = smartdispatch.generate_name_from_arguments(arguments)
-            commands = smartdispatch.get_commands_from_arguments(arguments)
+            # Command that needs to be parsed and unfolded.
+            command = " ".join(args.commandAndOptions)
+            jobname = smartdispatch.generate_name_from_command(command, max_length=235)
+            commands = smartdispatch.unfold_command(command)
 
         commands = smartdispatch.replace_uid_tag(commands)
         nb_commands = len(commands)  # For print at the end
@@ -61,7 +61,7 @@ def main():
         nb_commands = command_manager.get_nb_commands_to_run()
 
     # Use a pool of workers to execute commands
-    nb_workers = min(command_manager.count_commands(), args.pool)
+    nb_workers = min(command_manager.get_nb_commands_to_run(), args.pool)
     worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
     commands = [worker_command] * nb_workers  # Replace commands with `nb_workers` workers
 
@@ -134,7 +134,7 @@ def parse_arguments():
             parser.error("You need to specify a command to launch.")
         if args.queueName not in AVAILABLE_QUEUES and ((args.coresPerNode is None and args.gpusPerNode is None) or args.walltime is None):
             parser.error("Unknown queue, --coresPerNode/--gpusPerNode and --walltime must be set.")
-    
+
     return args
 
 
