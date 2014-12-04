@@ -91,7 +91,7 @@ def main():
         job_ids = []
         for pbs_filename in pbs_filenames:
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
-            job_ids += qsub_output.rstrip()
+            job_ids += [qsub_output.rstrip()]
 
         with utils.open_with_lock(os.path.join(path_job_commands, "job_ids.txt"), 'a') as job_ids_file:
             job_ids_file.writelines(job_ids)
