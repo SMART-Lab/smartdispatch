@@ -42,10 +42,12 @@ def main():
             commands = smartdispatch.unfold_command(command)
 
         commands = smartdispatch.replace_uid_tag(commands)
+        nb_commands = len(commands)  # For print at the end
 
-        path_job_logs, path_job_commands = create_job_folders(jobname)
+        path_job, path_job_logs, path_job_commands = create_job_folders(jobname)
     elif args.mode == "resume":
-        path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
+        jobname = args.batch_uid
+        path_job, path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
     else:
         raise ValueError("Unknown subcommand!")
 
@@ -58,6 +60,7 @@ def main():
             command_manager.set_commands_to_run(commands)
         else:
             command_manager.reset_running_commands()
+            nb_commands = command_manager.get_nb_commands_to_run()
 
         worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
         # Replace commands with `args.pool` workers
@@ -83,11 +86,19 @@ def main():
     job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME)
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
-    # Launch the jobs with QSUB
+    # Launch the jobs
+    print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
+    print "Batch UID:\n {batch_uid}".format(batch_uid=jobname)
     if not args.doNotLaunch:
+        jobs_id = []
         for pbs_filename in pbs_filenames:
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
-            print qsub_output,
+            jobs_id += [qsub_output.rstrip()]
+
+        with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
+            jobs_id_file.writelines("\n".join(jobs_id))
+        print "\nJobs id:\n {jobs_id}".format(jobs_id=" ".join(jobs_id))
+    print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
 
 
 def parse_arguments():
@@ -137,11 +148,11 @@ def _gen_job_paths(jobname):
     path_job_logs = os.path.join(path_job, 'logs')
     path_job_commands = os.path.join(path_job, 'commands')
 
-    return path_job_logs, path_job_commands
+    return path_job, path_job_logs, path_job_commands
 
 
 def get_job_folders(jobname):
-    path_job_logs, path_job_commands = _gen_job_paths(jobname)
+    path_job, path_job_logs, path_job_commands = _gen_job_paths(jobname)
 
     if not os.path.exists(path_job_commands):
         raise LookupError("Batch UID ({0}) does not exist! Cannot resume.".format(jobname))
@@ -149,12 +160,12 @@ def get_job_folders(jobname):
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
 
-    return path_job_logs, path_job_commands
+    return path_job, path_job_logs, path_job_commands
 
 
 def create_job_folders(jobname):
     """Creates the folders where the logs, commands and QSUB files will be saved."""
-    path_job_logs, path_job_commands = _gen_job_paths(jobname)
+    path_job, path_job_logs, path_job_commands = _gen_job_paths(jobname)
 
     if not os.path.exists(path_job_commands):
         os.makedirs(path_job_commands)
@@ -162,7 +173,7 @@ def create_job_folders(jobname):
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
 
-    return path_job_logs, path_job_commands
+    return path_job, path_job_logs, path_job_commands
 
 
 if __name__ == "__main__":

@@ -55,6 +55,9 @@ class CommandFilesTests(unittest.TestCase):
 
         assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
 
+    def test_get_nb_commands_to_run(self):
+        assert_equal(self.command_manager.get_nb_commands_to_run(), 3)
+
     def test_set_running_command_as_finished(self):
         # SetUp
         command = self.command_manager.get_command_to_run()
