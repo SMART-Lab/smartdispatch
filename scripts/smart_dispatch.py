@@ -93,10 +93,10 @@ def main():
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
             jobs_id += [qsub_output.rstrip()]
 
-        with utils.open_with_lock(os.path.join(path_job, "job_ids.txt"), 'a') as jobs_id_file:
+        with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
             jobs_id_file.writelines("\n".join(jobs_id))
         print "\nJobs id: {jobs_id}".format(jobs_id=" ".join(jobs_id))
-    print "\nLogs, command, and jobs id related to this batch will be in: {smartdispatch_folder}/{{Batch UID}}".format(smartdispatch_folder=path_job)
+    print "\nLogs, command, and jobs id related to this batch will be in: {smartdispatch_folder}".format(smartdispatch_folder=os.path.relpath(path_job))
 
 
 def parse_arguments():
