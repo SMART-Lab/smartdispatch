@@ -59,6 +59,7 @@ def main():
             command_manager.set_commands_to_run(commands)
         else:
             command_manager.reset_running_commands()
+            nb_commands = command_manager.get_nb_commands_to_run()
 
         worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
         # Replace commands with `args.pool` workers

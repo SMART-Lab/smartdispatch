@@ -36,6 +36,10 @@ class CommandManager(object):
                 self._move_line_between_files(commands_file, running_commands_file, command)
         return command[:-1]
 
+    def get_nb_commands_to_run(self):
+        with utils.open_with_lock(self._commands_filename, 'r') as commands_file:
+            return len(commands_file.readline())
+
     def set_running_command_as_finished(self, command):
         with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
             with utils.open_with_lock(self._finished_commands_filename, 'a') as finished_commands_file:
