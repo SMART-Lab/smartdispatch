@@ -86,7 +86,7 @@ def main():
 
     # Launch the jobs
     print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
-    print "Batch UID: {batch_uid}".format(batch_uid=jobname)
+    print "Batch UID:\n {batch_uid}".format(batch_uid=jobname)
     if not args.doNotLaunch:
         jobs_id = []
         for pbs_filename in pbs_filenames:
@@ -95,8 +95,8 @@ def main():
 
         with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
             jobs_id_file.writelines("\n".join(jobs_id))
-        print "\nJobs id: {jobs_id}".format(jobs_id=" ".join(jobs_id))
-    print "\nLogs, command, and jobs id related to this batch will be in:\n\t{smartdispatch_folder}".format(smartdispatch_folder=path_job)
+        print "\nJobs id:\n {jobs_id}".format(jobs_id=" ".join(jobs_id))
+    print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
 
 
 def parse_arguments():
