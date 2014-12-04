@@ -46,6 +46,7 @@ def main():
 
         path_job, path_job_logs, path_job_commands = create_job_folders(jobname)
     elif args.mode == "resume":
+        jobname = args.batch_uid
         path_job, path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
     else:
         raise ValueError("Unknown subcommand!")
