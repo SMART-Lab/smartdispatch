@@ -127,7 +127,7 @@ class TestHeliosQueue(unittest.TestCase):
 
     def setUp(self):
         self.commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
-        self.queue = Queue("maint", "helios")
+        self.queue = Queue("gpu_8", "helios")
 
         self.env_val = 'RAP'
 
