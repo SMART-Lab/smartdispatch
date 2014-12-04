@@ -1,9 +1,25 @@
 {
-    "maint": {
+    "gpu_8": {
         "ram": 128,
         "modules": ["cuda/6.0.37"],
         "cores": 20,
         "max_walltime": "12:00:00",
+        "gpus": 8,
+        "nodes": 15
+    },
+    "gpu_4": {
+        "ram": 64,
+        "modules": ["cuda/6.0.37"],
+        "cores": 10,
+        "max_walltime": "12:00:00",
+        "gpus": 4,
+        "nodes": 15
+    },
+    "test": {
+        "ram": 128,
+        "modules": ["cuda/6.0.37"],
+        "cores": 20,
+        "max_walltime": "15:00",
         "gpus": 8,
         "nodes": 15
     }

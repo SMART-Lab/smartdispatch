@@ -20,6 +20,7 @@ import smartdispatch
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 CLUSTER_NAME = utils.detect_cluster()
 AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
+LAUNCHER = utils.get_launcher(CLUSTER_NAME)
 
 
 def main():
@@ -85,7 +86,7 @@ def main():
     # Launch the jobs with QSUB
     if not args.doNotLaunch:
         for pbs_filename in pbs_filenames:
-            qsub_output = check_output('qsub ' + pbs_filename, shell=True)
+            qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
             print qsub_output,
 
 
@@ -93,6 +94,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, qfat512@mp2)')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
+    parser.add_argument('-L', '--launcher', choices=['qsub', 'msub'], required=False, help='Which launcher to use. Default: qsub')
     parser.add_argument('-C', '--coresPerNode', type=int, required=False, help='How many cores there are per node.')
     parser.add_argument('-G', '--gpusPerNode', type=int, required=False, help='How many gpus there are per node.')
     #parser.add_argument('-M', '--memPerNode', type=int, required=False, help='How much memory there are per node (in Gb).')
@@ -121,7 +123,7 @@ def parse_arguments():
         if args.commandsFile is None and len(args.commandAndOptions) < 1:
             parser.error("You need to specify a command to launch.")
         if args.queueName not in AVAILABLE_QUEUES and ((args.coresPerNode is None and args.gpusPerNode is None) or args.walltime is None):
-            parser.error("Unknown queue, --coresPerCommand/--gpusPerCommand and --walltime must be set.")
+            parser.error("Unknown queue, --coresPerNode/--gpusPerNode and --walltime must be set.")
     else:
         if args.pool is None:
             resume_parser.error("The resume feature only works with the --pool argument.")
