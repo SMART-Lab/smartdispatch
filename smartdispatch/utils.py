@@ -53,6 +53,7 @@ def decode_escaped_characters(text):
 
     return re.sub(r"\\x..", unhexify, text)
 
+
 @contextmanager
 def open_with_lock(*args, **kwargs):
     """ Context manager for opening file with an exclusive lock. """
@@ -95,3 +96,10 @@ def detect_cluster():
     elif server_name.split('.')[-1] == 'helios':
         cluster_name = "helios"
     return cluster_name
+
+
+def get_launcher(cluster_name):
+    if cluster_name == "helios":
+        return "msub"
+    else:
+        return "qsub"

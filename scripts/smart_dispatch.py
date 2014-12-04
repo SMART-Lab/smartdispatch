@@ -20,6 +20,7 @@ import smartdispatch
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 CLUSTER_NAME = utils.detect_cluster()
 AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
+LAUNCHER = utils.get_launcher(CLUSTER_NAME)
 
 
 def main():
@@ -85,7 +86,7 @@ def main():
     # Launch the jobs with QSUB
     if not args.doNotLaunch:
         for pbs_filename in pbs_filenames:
-            qsub_output = check_output('qsub ' + pbs_filename, shell=True)
+            qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER, pbs_filename=pbs_filename), shell=True)
             print qsub_output,
 
 
