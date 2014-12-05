@@ -2,7 +2,7 @@
 [![Coverage Status](https://coveralls.io/repos/SMART-Lab/smartdispatch/badge.png)](https://coveralls.io/r/SMART-Lab/smartdispatch)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/SMART-Lab/smartdispatch/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/SMART-Lab/smartdispatch/?branch=master)
 # Smart Dispatch
-A batch launcher for supercomputers using qsub (Torque).
+A batch launcher for supercomputers using qsub/msub (Torque).
 
 ## Installing
 `pip install git+https://github.com/SMART-Lab/smartdispatch`
