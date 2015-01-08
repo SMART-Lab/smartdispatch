@@ -37,7 +37,7 @@ class CommandManager(object):
         return command[:-1]
 
     def get_nb_commands_to_run(self):
-        with utils.open_with_lock(self._commands_filename, 'r') as commands_file:
+        with open(self._commands_filename, 'r') as commands_file:
             return len(commands_file.readlines())
 
     def set_running_command_as_finished(self, command):
