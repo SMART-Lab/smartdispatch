@@ -72,11 +72,11 @@ class TestSmartWorker(unittest.TestCase):
         command = ["smart_worker.py", self.command_manager._commands_filename, self.logs_dir]
 
         # Lock the commands file before running 'smart_worker.py'
-        with open(self.command_manager._commands_filename) as commands_file:
-            fcntl.flock(commands_file.fileno(), fcntl.LOCK_EX)
+        with open(self.command_manager._commands_filename, 'r+') as commands_file:
+            fcntl.lockf(commands_file, fcntl.LOCK_EX)
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             time.sleep(0.1)
-            fcntl.flock(commands_file.fileno(), fcntl.LOCK_UN)
+            fcntl.lockf(commands_file, fcntl.LOCK_UN)
 
         stdout, stderr = process.communicate()
         assert_equal(stdout, "")
