@@ -48,7 +48,7 @@ def test_open_with_lock():
     script = ["import logging",
               "from smartdispatch.utils import open_with_lock",
               "logging.root.setLevel(logging.INFO)",
-              "with open_with_lock('{0}'): pass".format(filename)]
+              "with open_with_lock('{0}', 'r+'): pass".format(filename)]
 
     open(os.path.join(temp_dir, "test_lock.py"), 'w').write("\n".join(script))
 
@@ -62,5 +62,6 @@ def test_open_with_lock():
     stdout, stderr = process.communicate()
     assert_equal(stdout, "")
     assert_true("write-lock" in stderr, msg="Forcing a race condition, try increasing sleeping time above.")
+    assert_true("Traceback" not in stderr, msg="Unexpected error: " + stderr)  # Check that there are no errors.
 
     shutil.rmtree(temp_dir)
