@@ -57,7 +57,7 @@ def test_open_with_lock():
     # Lock the commands file before running python command
     with utils.open_with_lock(filename, 'w'):
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-        time.sleep(0.1)
+        time.sleep(1)
 
     stdout, stderr = process.communicate()
     assert_equal(stdout, "")

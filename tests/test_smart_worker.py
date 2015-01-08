@@ -74,7 +74,7 @@ class TestSmartWorker(unittest.TestCase):
         # Lock the commands file before running 'smart_worker.py'
         with utils.open_with_lock(self.command_manager._commands_filename, 'r+'):
             process = Popen(command, stdout=PIPE, stderr=PIPE)
-            time.sleep(0.1)
+            time.sleep(1)
 
         stdout, stderr = process.communicate()
         assert_equal(stdout, "")
