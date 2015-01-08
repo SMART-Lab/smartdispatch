@@ -61,6 +61,7 @@ def test_open_with_lock():
 
     stdout, stderr = process.communicate()
     assert_equal(stdout, "")
-    assert_true("Traceback" not in stderr, msg="Unexpected error: " + stderr)
+    assert_true("write-lock" in stderr, msg="Forcing a race condition, try increasing sleeping time above.")
+    assert_true("Traceback" not in stderr, msg="Unexpected error: " + stderr)  # Check that there are no errors.
 
     shutil.rmtree(temp_dir)

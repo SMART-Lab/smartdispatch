@@ -72,12 +72,11 @@ class TestSmartWorker(unittest.TestCase):
         command = ["smart_worker.py", self.command_manager._commands_filename, self.logs_dir]
 
         # Lock the commands file before running 'smart_worker.py'
-        with open(self.command_manager._commands_filename, 'r+') as commands_file:
-            fcntl.lockf(commands_file, fcntl.LOCK_EX)
+        with utils.open_with_lock(self.command_manager._commands_filename, 'r+'):
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             time.sleep(0.1)
-            fcntl.lockf(commands_file, fcntl.LOCK_UN)
 
         stdout, stderr = process.communicate()
         assert_equal(stdout, "")
         assert_true("write-lock" in stderr, msg="Forcing a race condition, try increasing sleeping time above.")
+        assert_true("Traceback" not in stderr)  # Check that there are no errors.
