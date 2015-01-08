@@ -59,12 +59,12 @@ def open_with_lock(*args, **kwargs):
     """ Context manager for opening file with an exclusive lock. """
     f = open(*args, **kwargs)
     try:
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         logging.info("Can't immediately write-lock the file ({0}), blocking ...".format(f.name))
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        fcntl.lockf(f, fcntl.LOCK_EX)
     yield f
-    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+    fcntl.lockf(f, fcntl.LOCK_UN)
     f.close()
 
 
