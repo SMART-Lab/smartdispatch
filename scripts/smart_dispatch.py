@@ -33,7 +33,7 @@ def main():
     if args.mode == "launch":
         if args.commandsFile is not None:
             # Commands are listed in a file.
-            jobname = args.commandsFile.name
+            jobname = os.path.basename(args.commandsFile.name)
             commands = smartdispatch.get_commands_from_file(args.commandsFile)
         else:
             # Command that needs to be parsed and unfolded.
