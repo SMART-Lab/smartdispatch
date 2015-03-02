@@ -9,6 +9,7 @@ class CommandManager(object):
 
         self._running_commands_filename = os.path.join(base_path, "running_" + filename)
         self._finished_commands_filename = os.path.join(base_path, "finished_" + filename)
+        self._failed_commands_filename = os.path.join(base_path, "failed_" + filename)
         self._commands_filename = commands_filename
 
     def _move_line_between_files(self, file1, file2, line):
@@ -40,9 +41,14 @@ class CommandManager(object):
         with open(self._commands_filename, 'r') as commands_file:
             return len(commands_file.readlines())
 
-    def set_running_command_as_finished(self, command):
+    def set_running_command_as_finished(self, command, error_code=0):
         with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
-            with utils.open_with_lock(self._finished_commands_filename, 'a') as finished_commands_file:
+            if error_code == 0:
+                file_name = self._finished_commands_filename
+            else:
+                file_name = self._failed_commands_filename
+
+            with utils.open_with_lock(file_name, 'a') as finished_commands_file:
                 self._move_line_between_files(running_commands_file, finished_commands_file, command + '\n')
 
     def reset_running_commands(self):
