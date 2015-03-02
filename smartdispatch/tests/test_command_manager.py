@@ -72,8 +72,32 @@ class CommandFilesTests(unittest.TestCase):
         with open(self.command_manager._running_commands_filename, "r") as running_commands_file:
             assert_equal(running_commands_file.read(), "")
 
+        with open(self.command_manager._failed_commands_filename, "r") as failed_commands_file:
+            assert_equal(failed_commands_file.read(), "")
+
         with open(self.command_manager._finished_commands_filename, "r") as finished_commands_file:
             assert_equal(finished_commands_file.read(), self.command1)
+
+    def test_set_running_command_as_failed(self):
+        # SetUp
+        command = self.command_manager.get_command_to_run()
+        error_code = 1
+
+        # The function to test
+        self.command_manager.set_running_command_as_finished(command, error_code)
+
+        # Test validation
+        with open(self.command_manager._commands_filename, "r") as commands_file:
+            assert_equal(commands_file.read(), self.command2 + self.command3)
+
+        with open(self.command_manager._running_commands_filename, "r") as running_commands_file:
+            assert_equal(running_commands_file.read(), "")
+
+        with open(self.command_manager._failed_commands_filename, "r") as failed_commands_file:
+            assert_equal(failed_commands_file.read(), self.command1)
+
+        with open(self.command_manager._finished_commands_filename, "r") as finished_commands_file:
+            assert_equal(finished_commands_file.read(), "")
 
     def test_reset_running_commands(self):
         # SetUp
