@@ -114,7 +114,7 @@ class CommandFilesTests(unittest.TestCase):
         with open(self.command_manager._failed_commands_filename, "r") as failed_commands_file:
             assert_equal(failed_commands_file.read(), self.command1)
 
-        assert_true(not os.path.isfile(self.command_manager._finished_commands_file))
+        assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
 
     def test_reset_running_commands(self):
         # SetUp
