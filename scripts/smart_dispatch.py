@@ -73,12 +73,12 @@ def main():
                 {failed_commands_err_file}
                 {line}\
                 """)
-                print FAILED_COMMAND_MESSAGE.format(
+                utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
                     line="-" * 84,
                     nb_failed=len(failed_commands),
                     failed_commands=''.join(failed_commands),
                     failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
-                )
+                ))
 
                 if not utils.yes_no_prompt("Do you want to continue?", 'n'):
                     exit()
