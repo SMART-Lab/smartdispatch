@@ -5,8 +5,28 @@ import hashlib
 import unicodedata
 import json
 
+from distutils.util import strtobool
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
+
+
+def yes_no_prompt(query, default=None):
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "y":
+        prompt = " [Y/n] "
+    elif default == "n":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '{}'".format(default))
+
+    while True:
+        try:
+            answer = raw_input("{0}{1}".format(query, prompt))
+            return strtobool(answer)
+        except ValueError:
+            if answer == '' and default is not None:
+                return strtobool(default)
 
 
 def chunks(sequence, n):
