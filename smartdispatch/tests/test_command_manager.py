@@ -15,7 +15,7 @@ class CommandFilesTests(unittest.TestCase):
         self.command2 = "2\n"
         self.command3 = "3\n"
 
-        command_filename = os.path.join(self._base_dir, "commant.txt")
+        command_filename = os.path.join(self._base_dir, "commands.txt")
 
         with open(command_filename, "w+") as commands_file:
             commands_file.write(self.command1 + self.command2 + self.command3)
@@ -50,7 +50,7 @@ class CommandFilesTests(unittest.TestCase):
 
         # Test validation
         assert_equal(len(failed_commands), 1)
-        assert_equal(failed_commands[0], self.command1.strip())
+        assert_equal(failed_commands[0], self.command1)
 
     def test_get_failed_commands_empty(self):
         # The function to test
@@ -91,11 +91,10 @@ class CommandFilesTests(unittest.TestCase):
         with open(self.command_manager._running_commands_filename, "r") as running_commands_file:
             assert_equal(running_commands_file.read(), "")
 
-        with open(self.command_manager._failed_commands_filename, "r") as failed_commands_file:
-            assert_equal(failed_commands_file.read(), "")
-
         with open(self.command_manager._finished_commands_filename, "r") as finished_commands_file:
             assert_equal(finished_commands_file.read(), self.command1)
+
+        assert_true(not os.path.isfile(self.command_manager._failed_commands_filename))
 
     def test_set_running_command_as_failed(self):
         # SetUp
@@ -115,8 +114,7 @@ class CommandFilesTests(unittest.TestCase):
         with open(self.command_manager._failed_commands_filename, "r") as failed_commands_file:
             assert_equal(failed_commands_file.read(), self.command1)
 
-        with open(self.command_manager._finished_commands_filename, "r") as finished_commands_file:
-            assert_equal(finished_commands_file.read(), "")
+        assert_true(not os.path.isfile(self.command_manager._finished_commands_file))
 
     def test_reset_running_commands(self):
         # SetUp
