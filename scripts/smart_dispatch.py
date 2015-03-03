@@ -65,16 +65,13 @@ def main():
             failed_commands = command_manager.get_failed_commands()
             if len(failed_commands) > 0:
                 FAILED_COMMAND_MESSAGE = dedent("""\
-                {line}
                 {nb_failed} command(s) are in a failed state. They won't be resumed.
                 Failed commands:
                 {failed_commands}
                 The actual errors can be found in the log folder under:
-                {failed_commands_err_file}
-                {line}\
+                {failed_commands_err_file}\
                 """)
                 utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
-                    line="-" * 84,
                     nb_failed=len(failed_commands),
                     failed_commands=''.join(failed_commands),
                     failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
