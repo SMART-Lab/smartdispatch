@@ -6,6 +6,7 @@ import argparse
 import time as t
 import numpy as np
 from subprocess import check_output
+from textwrap import dedent
 
 from smartdispatch.command_manager import CommandManager
 
@@ -63,14 +64,15 @@ def main():
             # Verifying if there is failed commands
             failed_commands = command_manager.get_failed_commands()
             if len(failed_commands) > 0:
-                FAILED_COMMAND_MESSAGE = """{line}
+                FAILED_COMMAND_MESSAGE = dedent("""\
+                {line}
                 {nb_failed} command(s) are in a failed state. They won't be resumed.
                 Failed commands:
                 {failed_commands}
                 The actual errors can be found in the log folder under:
                 {failed_commands_err_file}
-                {line}
-                """
+                {line}\
+                """)
                 print FAILED_COMMAND_MESSAGE.format(
                     line="-" * 84,
                     nb_failed=len(failed_commands),
@@ -110,7 +112,7 @@ def main():
 
     # Launch the jobs
     print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
-    print "Batch UID:\n {batch_uid}".format(batch_uid=jobname)
+    print "Batch UID:\n{batch_uid}".format(batch_uid=jobname)
     if not args.doNotLaunch:
         jobs_id = []
         for pbs_filename in pbs_filenames:
@@ -118,7 +120,7 @@ def main():
             jobs_id += [qsub_output.strip()]
 
         with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
-            jobs_id_file.writeline(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+            jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
             jobs_id_file.writelines("\n".join(jobs_id) + "\n")
         print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))
     print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
