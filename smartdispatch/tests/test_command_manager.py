@@ -40,6 +40,25 @@ class CommandFilesTests(unittest.TestCase):
 
         assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
 
+    def test_get_failed_commands(self):
+        # Setup
+        command = self.command_manager.get_command_to_run()
+        self.command_manager.set_running_command_as_finished(command, 1)
+
+        # The function to test
+        failed_commands = self.command_manager.get_failed_commands()
+
+        # Test validation
+        assert_equal(len(failed_commands), 1)
+        assert_equal(failed_commands[0], self.command1.strip())
+
+    def test_get_failed_commands_empty(self):
+        # The function to test
+        failed_commands = self.command_manager.get_failed_commands()
+
+        # Test validation
+        assert_equal(len(failed_commands), 0)
+
     def test_get_command_to_run(self):
         # The function to test
         command = self.command_manager.get_command_to_run()

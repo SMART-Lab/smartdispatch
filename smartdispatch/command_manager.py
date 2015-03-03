@@ -41,13 +41,20 @@ class CommandManager(object):
         with open(self._commands_filename, 'r') as commands_file:
             return len(commands_file.readlines())
 
-    def set_running_command_as_finished(self, command, error_code=0):
-        with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
-            if error_code == 0:
-                file_name = self._finished_commands_filename
-            else:
-                file_name = self._failed_commands_filename
+    def get_failed_commands(self):
+        commands = []
+        if os.path.isfile(self._failed_commands_filename):
+            with open(self._failed_commands_filename, 'r') as commands_file:
+                commands = commands_file.readlines()
+        return commands
 
+    def set_running_command_as_finished(self, command, error_code=0):
+        if error_code == 0:
+            file_name = self._finished_commands_filename
+        else:
+            file_name = self._failed_commands_filename
+
+        with utils.open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
             with utils.open_with_lock(file_name, 'a') as finished_commands_file:
                 self._move_line_between_files(running_commands_file, finished_commands_file, command + '\n')
 

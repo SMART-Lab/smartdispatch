@@ -60,6 +60,27 @@ def main():
         if args.mode == "launch":
             command_manager.set_commands_to_run(commands)
         else:
+            # Verifying if there is failed commands
+            failed_commands = command_manager.get_failed_commands()
+            if len(failed_commands) > 0:
+                FAILED_COMMAND_MESSAGE = """{line}
+                {nb_failed} command(s) are in a failed state. They won't be resumed.
+                Failed commands:
+                {failed_commands}
+                The actual errors can be found in the log folder under:
+                {failed_commands_err_file}
+                {line}
+                """
+                print FAILED_COMMAND_MESSAGE.format(
+                    line="-" * 84,
+                    nb_failed=len(failed_commands),
+                    failed_commands=''.join(failed_commands),
+                    failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
+                )
+
+                if not utils.yes_no_prompt("Do you want to continue?", 'n'):
+                    exit()
+
             command_manager.reset_running_commands()
             nb_commands = command_manager.get_nb_commands_to_run()
 
@@ -94,7 +115,7 @@ def main():
         jobs_id = []
         for pbs_filename in pbs_filenames:
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
-            jobs_id += [qsub_output.rstrip()]
+            jobs_id += [qsub_output.strip()]
 
         with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
             jobs_id_file.writeline(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
