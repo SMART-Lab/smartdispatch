@@ -69,8 +69,7 @@ def main():
                 Failed commands:
                 {failed_commands}
                 The actual errors can be found in the log folder under:
-                {failed_commands_err_file}\
-                """)
+                {failed_commands_err_file}""")
                 utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
                     nb_failed=len(failed_commands),
                     failed_commands=''.join(failed_commands),
