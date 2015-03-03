@@ -3,6 +3,7 @@
 
 import os
 import argparse
+import time as t
 import numpy as np
 from subprocess import check_output
 
@@ -96,8 +97,9 @@ def main():
             jobs_id += [qsub_output.rstrip()]
 
         with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
-            jobs_id_file.writelines("\n".join(jobs_id))
-        print "\nJobs id:\n {jobs_id}".format(jobs_id=" ".join(jobs_id))
+            jobs_id_file.writeline(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+            jobs_id_file.writelines("\n".join(jobs_id) + "\n")
+        print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))
     print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
 
 
