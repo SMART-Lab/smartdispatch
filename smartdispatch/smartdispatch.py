@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 import re
 import itertools
-from datetime import datetime
+import time as t
 
 import smartdispatch
 from smartdispatch import utils
@@ -35,53 +35,9 @@ def generate_name_from_command(command, max_length_arg=None, max_length=None):
     if max_length_arg is not None:
         max_length_arg = min(-max_length_arg, max_length_arg)
 
-    if max_length is not None:
-        max_length = min(-max_length, max_length)
-
-    name = '_'.join([utils.slugify(argvalue)[max_length_arg:] for argvalue in command.split()])
-    return name[max_length:]
-
-
-def generate_name_from_arguments(arguments, max_length_arg=None, max_length=None, prefix=datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')):
-    ''' Generates name from given unfolded arguments.
-
-    Generate a name by concatenating the first and last values of every
-    unfolded arguments and by trimming lengthty (as defined by max_length_arg)
-    arguments.
-
-    Parameters
-    ----------
-    arguments : list of list of str
-        list of unfolded arguments
-    max_length_arg : int
-        arguments longer than this will be trimmed keeping last characters (Default: inf)
-    max_length : int
-        trim name if longer than this keeping last characters (Default: inf)
-    prefix : str
-        text to preprend to the name (Default: current datetime)
-
-    Returns
-    -------
-    name : str
-        slugified name
-    '''
-    if max_length_arg is not None:
-        max_length_arg = min(-max_length_arg, max_length_arg)
-
-    if max_length is not None:
-        max_length = min(-max_length, max_length)
-
-    name = []
-    for argvalues in arguments:
-        argvalues = map(utils.slugify, argvalues)
-        name.append(argvalues[0][max_length_arg:])
-        if len(argvalues) > 1:
-            name[-1] += '-' + argvalues[-1][max_length_arg:]
-
-    name = "_".join(name)
-
-    name = prefix + name[max_length:]
-    return name
+    name = t.strftime("%Y-%m-%d_%H-%M-%S_")
+    name += '_'.join([utils.slugify(argvalue)[max_length_arg:] for argvalue in command.split()])
+    return name[:max_length]
 
 
 def get_commands_from_file(fileobj):

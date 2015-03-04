@@ -11,6 +11,7 @@ class CommandFilesTests(unittest.TestCase):
 
     def setUp(self):
         self._base_dir = tmp.mkdtemp()
+        self.nb_commands = 3
         self.command1 = "1\n"
         self.command2 = "2\n"
         self.command3 = "3\n"
@@ -75,7 +76,7 @@ class CommandFilesTests(unittest.TestCase):
         assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
 
     def test_get_nb_commands_to_run(self):
-        assert_equal(self.command_manager.get_nb_commands_to_run(), 3)
+        assert_equal(self.command_manager.get_nb_commands_to_run(), self.nb_commands)
 
     def test_set_running_command_as_finished(self):
         # SetUp
