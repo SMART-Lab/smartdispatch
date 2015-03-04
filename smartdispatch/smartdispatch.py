@@ -36,9 +36,6 @@ def generate_name_from_command(command, max_length_arg=None, max_length=None):
     if max_length_arg is not None:
         max_length_arg = min(-max_length_arg, max_length_arg)
 
-    if max_length is not None:
-        max_length = min(-max_length, max_length)
-
     name = t.strftime("%Y-%m-%d_%H-%M-%S_")
     name += '_'.join([utils.slugify(argvalue)[max_length_arg:] for argvalue in command.split()])
     return name[:max_length]
