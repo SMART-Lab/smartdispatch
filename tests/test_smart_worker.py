@@ -1,6 +1,7 @@
 import os
 import unittest
 import tempfile
+import fcntl
 import time
 import shutil
 
