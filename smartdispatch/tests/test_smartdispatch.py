@@ -3,7 +3,6 @@ from StringIO import StringIO
 
 from nose.tools import assert_true, assert_equal
 from numpy.testing import assert_array_equal
-from datetime import datetime
 from smartdispatch import utils
 
 
@@ -31,38 +30,6 @@ def test_generate_name_from_command():
     command = "command path/number/one path/number/two"
     expected = "command_pathnumberone_pathnumbertwo"
     assert_equal(smartdispatch.generate_name_from_command(command)[date_lenght:], expected)
-
-
-def test_generate_name_from_arguments():
-    prefix = "prefix_"
-
-    arguments = [["my_command"], ["args1a", "args1b", "args1c"], ["args2a", "args2b"]]
-    expected = prefix + "my_command_args1a-args1c_args2a-args2b"
-    assert_equal(smartdispatch.generate_name_from_arguments(arguments, prefix=prefix), expected)
-
-    max_length_arg = 7
-    arguments = [["command"], ["verylongargs1a", "verylongargs1b", "verylongargs1c"], ["args2a", "args2b"]]
-    expected = prefix + "command_" + arguments[1][0][-max_length_arg:] + "-" + arguments[1][-1][-max_length_arg:] + "_args2a-args2b"
-    assert_equal(smartdispatch.generate_name_from_arguments(arguments, max_length_arg, prefix=prefix), expected)
-
-    max_length = 23
-    arguments = [["command"], ["verylongargs1a", "verylongargs1b", "verylongargs1c"], ["args2a", "args2b"]]
-    expected = "command_" + arguments[1][0] + "-" + arguments[1][-1] + "_args2a-args2b"
-    expected = prefix + expected[-max_length:]
-    assert_equal(smartdispatch.generate_name_from_arguments(arguments, max_length=max_length, prefix=prefix), expected)
-
-    # Test path arguments in command
-    arguments = [["command"], ["path/argument/1", "path/argument/2", "path/argument/3"]]
-    expected = prefix + "command_pathargument1-pathargument3"
-    assert_equal(smartdispatch.generate_name_from_arguments(arguments, prefix=prefix), expected)
-
-    # Make sure default prefix does not raise exception
-    arguments = [["command"]]
-    results = smartdispatch.generate_name_from_arguments(arguments)
-    expect_datetime = datetime.now()
-    assert_equal(results.split("_")[-1], arguments[0][0])
-    result_datetime = datetime.strptime("_".join(results.split("_")[:-1]), '%Y-%m-%d_%H-%M-%S')
-    assert_true(result_datetime <= expect_datetime)
 
 
 def test_get_commands_from_file():
@@ -158,7 +125,7 @@ def test_replace_uid_tag():
 
     commands = ["a command with a {UID} tag"] * 10
     uid = utils.generate_uid_from_string(commands[0])
-    assert_array_equal(smartdispatch.replace_uid_tag(commands), [commands[0].replace("{UID}", uid)]*len(commands))
+    assert_array_equal(smartdispatch.replace_uid_tag(commands), [commands[0].replace("{UID}", uid)] * len(commands))
 
 
 def test_get_available_queues():
