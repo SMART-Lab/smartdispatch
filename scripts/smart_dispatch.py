@@ -53,8 +53,6 @@ def main():
     else:
         raise ValueError("Unknown subcommand!")
 
-    # Pool of workers
-    #if args.pool is not None:
     command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
 
     # If resume mode, reset running jobs
@@ -73,7 +71,7 @@ def main():
             utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
                 nb_failed=len(failed_commands),
                 failed_commands=''.join(failed_commands),
-                failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
+                failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1]) + '.err' for c in failed_commands])
             ))
 
             if not utils.yes_no_prompt("Do you want to continue?", 'n'):
@@ -127,11 +125,11 @@ def parse_arguments():
     parser.add_argument('-L', '--launcher', choices=['qsub', 'msub'], required=False, help='Which launcher to use. Default: qsub')
     parser.add_argument('-C', '--coresPerNode', type=int, required=False, help='How many cores there are per node.')
     parser.add_argument('-G', '--gpusPerNode', type=int, required=False, help='How many gpus there are per node.')
-    #parser.add_argument('-M', '--memPerNode', type=int, required=False, help='How much memory there are per node (in Gb).')
+    # parser.add_argument('-M', '--memPerNode', type=int, required=False, help='How much memory there are per node (in Gb).')
 
     parser.add_argument('-c', '--coresPerCommand', type=int, required=False, help='How many cores a command needs.', default=1)
     parser.add_argument('-g', '--gpusPerCommand', type=int, required=False, help='How many gpus a command needs.', default=1)
-    #parser.add_argument('-m', '--memPerCommand', type=float, required=False, help='How much memory a command needs (in Gb).')
+    # parser.add_argument('-m', '--memPerCommand', type=float, required=False, help='How much memory a command needs (in Gb).')
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
 
     parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
@@ -178,6 +176,7 @@ def get_job_folders(jobname):
 
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
+        os.makedirs(os.path.join(path_job_logs, "worker"))
 
     return path_job, path_job_logs, path_job_commands
 
@@ -191,6 +190,7 @@ def create_job_folders(jobname):
 
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
+        os.makedirs(os.path.join(path_job_logs, "worker"))
 
     return path_job, path_job_logs, path_job_commands
 
