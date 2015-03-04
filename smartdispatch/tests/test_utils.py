@@ -20,10 +20,10 @@ class PrintBoxedTests(unittest.TestCase):
         self.text = "This is weird test for a visual thing.\nWell maybe it's fine to test it's working."
 
     def test_print_boxed(self):
-        utils.print_boxed(self.empty)
+        utils.print_boxed(self.text)
 
     def test_print_boxed_empty(self):
-        utils.print_boxed(self.text)
+        utils.print_boxed(self.empty)
 
 
 def test_chunks():
