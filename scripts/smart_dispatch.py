@@ -88,8 +88,8 @@ def main():
 
     # Generating all the worker commands
     COMMAND_STRING = 'cd "{cwd}"; smart_worker.py "{commands_file}" "{log_folder}" '\
-                     '1>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{ID}.o" '\
-                     '2>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{ID}.e" '
+                     '1>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.o" '\
+                     '2>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.e" '
     COMMAND_STRING = COMMAND_STRING.format(cwd=os.getcwd(), commands_file=command_manager._commands_filename, log_folder=path_job_logs)
     commands = [COMMAND_STRING.format(ID=i) for i in range(args.pool)]
 
