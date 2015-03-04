@@ -51,19 +51,20 @@ def main():
     else:
         raise ValueError("Unknown subcommand!")
 
-    command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
+    # Pool of workers
+    if args.pool is not None:
+        command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
 
-    # If resume mode, reset running jobs
-    if args.mode == "launch":
-        command_manager.set_commands_to_run(commands)
-    elif args.mode == "resume":
-        command_manager.reset_running_commands()
-        nb_commands = command_manager.get_nb_commands_to_run()
+        # If resume mode, reset running jobs
+        if args.mode == "launch":
+            command_manager.set_commands_to_run(commands)
+        else:
+            command_manager.reset_running_commands()
+            nb_commands = command_manager.get_nb_commands_to_run()
 
-    # Use a pool of workers to execute commands
-    nb_workers = min(command_manager.get_nb_commands_to_run(), args.pool)
-    worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
-    commands = [worker_command] * nb_workers  # Replace commands with `nb_workers` workers
+        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
+        # Replace commands with `args.pool` workers
+        commands = [worker_command] * args.pool
 
     # Add redirect for output and error logs
     for i, command in enumerate(commands):
@@ -117,7 +118,7 @@ def parse_arguments():
     parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
 
-    parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands.", default=np.iinfo('int').max)
+    parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands.")
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
@@ -134,6 +135,9 @@ def parse_arguments():
             parser.error("You need to specify a command to launch.")
         if args.queueName not in AVAILABLE_QUEUES and ((args.coresPerNode is None and args.gpusPerNode is None) or args.walltime is None):
             parser.error("Unknown queue, --coresPerNode/--gpusPerNode and --walltime must be set.")
+    else:
+        if args.pool is None:
+            resume_parser.error("The resume feature only works with the --pool argument.")
 
     return args
 
