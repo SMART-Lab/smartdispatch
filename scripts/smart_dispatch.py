@@ -54,37 +54,41 @@ def main():
         raise ValueError("Unknown subcommand!")
 
     # Pool of workers
-    if args.pool is not None:
-        command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
+    #if args.pool is not None:
+    command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
 
-        # If resume mode, reset running jobs
-        if args.mode == "launch":
-            command_manager.set_commands_to_run(commands)
-        else:
-            # Verifying if there is are failed commands
-            failed_commands = command_manager.get_failed_commands()
-            if len(failed_commands) > 0:
-                FAILED_COMMAND_MESSAGE = dedent("""\
-                {nb_failed} command(s) are in a failed state. They won't be resumed.
-                Failed commands:
-                {failed_commands}
-                The actual errors can be found in the log folder under:
-                {failed_commands_err_file}""")
-                utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
-                    nb_failed=len(failed_commands),
-                    failed_commands=''.join(failed_commands),
-                    failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
-                ))
+    # If resume mode, reset running jobs
+    if args.mode == "launch":
+        command_manager.set_commands_to_run(commands)
+    elif args.mode == "resume":
+        # Verifying if there are failed commands
+        failed_commands = command_manager.get_failed_commands()
+        if len(failed_commands) > 0:
+            FAILED_COMMAND_MESSAGE = dedent("""\
+            {nb_failed} command(s) are in a failed state. They won't be resumed.
+            Failed commands:
+            {failed_commands}
+            The actual errors can be found in the log folder under:
+            {failed_commands_err_file}""")
+            utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
+                nb_failed=len(failed_commands),
+                failed_commands=''.join(failed_commands),
+                failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
+            ))
 
-                if not utils.yes_no_prompt("Do you want to continue?", 'n'):
-                    exit()
+            if not utils.yes_no_prompt("Do you want to continue?", 'n'):
+                exit()
 
-            command_manager.reset_running_commands()
-            nb_commands = command_manager.get_nb_commands_to_run()
+        command_manager.reset_running_commands()
+        nb_commands = command_manager.get_nb_commands_to_run()
 
-        worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
-        # Replace commands with `args.pool` workers
-        commands = [worker_command] * args.pool
+    # If no pool size is specified the number of commands is taken
+    if args.pool is None:
+        args.pool = command_manager.get_nb_commands_to_run()
+
+    worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
+    # Replace commands with `args.pool` workers
+    commands = [worker_command] * args.pool
 
     # Add redirect for output and error logs
     for i, command in enumerate(commands):
@@ -139,7 +143,7 @@ def parse_arguments():
     parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
 
-    parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands.")
+    parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands. Default: Nb commands")
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
