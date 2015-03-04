@@ -5,8 +5,35 @@ import hashlib
 import unicodedata
 import json
 
+from distutils.util import strtobool
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
+
+
+def print_boxed(string):
+    splitted_string = string.split('\n')
+    max_len = max(map(len, splitted_string))
+    box_line = u"\u2500" * (max_len + 2)
+
+    out = u"\u250c" + box_line + u"\u2510\n"
+    out += '\n'.join([u"\u2502 {} \u2502".format(line.ljust(max_len)) for line in splitted_string])
+    out += u"\n\u2514" + box_line + u"\u2518"
+    print out
+
+
+def yes_no_prompt(query, default=None):
+    available_prompts = {None: " [y/n] ", 'y': " [Y/n] ", 'n': " [y/N] "}
+
+    if default not in available_prompts:
+        raise ValueError("Invalid default: '{}'".format(default))
+
+    while True:
+        try:
+            answer = raw_input("{0}{1}".format(query, available_prompts[default]))
+            return strtobool(answer)
+        except ValueError:
+            if answer == '' and default is not None:
+                return strtobool(default)
 
 
 def chunks(sequence, n):

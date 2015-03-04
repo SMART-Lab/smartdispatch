@@ -3,8 +3,10 @@
 
 import os
 import argparse
+import time as t
 import numpy as np
 from subprocess import check_output
+from textwrap import dedent
 
 from smartdispatch.command_manager import CommandManager
 
@@ -59,6 +61,24 @@ def main():
         if args.mode == "launch":
             command_manager.set_commands_to_run(commands)
         else:
+            # Verifying if there is are failed commands
+            failed_commands = command_manager.get_failed_commands()
+            if len(failed_commands) > 0:
+                FAILED_COMMAND_MESSAGE = dedent("""\
+                {nb_failed} command(s) are in a failed state. They won't be resumed.
+                Failed commands:
+                {failed_commands}
+                The actual errors can be found in the log folder under:
+                {failed_commands_err_file}""")
+                utils.print_boxed(FAILED_COMMAND_MESSAGE.format(
+                    nb_failed=len(failed_commands),
+                    failed_commands=''.join(failed_commands),
+                    failed_commands_err_file='\n'.join([utils.generate_uid_from_string(c[:-1])+'.err' for c in failed_commands])
+                ))
+
+                if not utils.yes_no_prompt("Do you want to continue?", 'n'):
+                    exit()
+
             command_manager.reset_running_commands()
             nb_commands = command_manager.get_nb_commands_to_run()
 
@@ -88,16 +108,17 @@ def main():
 
     # Launch the jobs
     print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
-    print "Batch UID:\n {batch_uid}".format(batch_uid=jobname)
+    print "Batch UID:\n{batch_uid}".format(batch_uid=jobname)
     if not args.doNotLaunch:
         jobs_id = []
         for pbs_filename in pbs_filenames:
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
-            jobs_id += [qsub_output.rstrip()]
+            jobs_id += [qsub_output.strip()]
 
         with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
-            jobs_id_file.writelines("\n".join(jobs_id))
-        print "\nJobs id:\n {jobs_id}".format(jobs_id=" ".join(jobs_id))
+            jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+            jobs_id_file.writelines("\n".join(jobs_id) + "\n")
+        print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))
     print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
 
 

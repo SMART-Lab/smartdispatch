@@ -51,9 +51,9 @@ def main():
                 stdout_file.flush()
                 stderr_file.flush()
 
-                subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
+                error_code = subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
 
-        command_manager.set_running_command_as_finished(command)
+        command_manager.set_running_command_as_finished(command, error_code)
 
 if __name__ == '__main__':
     main()
