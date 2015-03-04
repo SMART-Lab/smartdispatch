@@ -24,7 +24,7 @@ def test_generate_name_from_command():
 
     max_length = 23
     command = "command veryverylongarg1 veryverylongarg1 veryverylongarg1 veryverylongarg1"
-    expected = command[max_length:]
+    expected = command[:max_length].replace(" ", "_")
     assert_equal(smartdispatch.generate_name_from_command(command, max_length=max_length + date_lenght)[date_lenght:], expected)
 
     # Test path arguments in command
