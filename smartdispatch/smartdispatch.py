@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import re
 import itertools
+import time as t
 from datetime import datetime
 
 import smartdispatch
@@ -38,8 +39,9 @@ def generate_name_from_command(command, max_length_arg=None, max_length=None):
     if max_length is not None:
         max_length = min(-max_length, max_length)
 
-    name = '_'.join([utils.slugify(argvalue)[max_length_arg:] for argvalue in command.split()])
-    return name[max_length:]
+    name = t.strftime("%Y-%m-%d_%H-%M-%S_")
+    name += '_'.join([utils.slugify(argvalue)[max_length_arg:] for argvalue in command.split()])
+    return name[:max_length]
 
 
 def generate_name_from_arguments(arguments, max_length_arg=None, max_length=None, prefix=datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')):
