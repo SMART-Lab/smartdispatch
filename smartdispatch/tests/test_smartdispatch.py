@@ -7,11 +7,11 @@ from smartdispatch import utils
 
 
 def test_generate_name_from_command():
-    date_lenght = 20
+    date_length = 20
 
     command = "command arg1 arg2"
     expected = "_".join(command.split())
-    assert_equal(smartdispatch.generate_name_from_command(command)[date_lenght:], expected)
+    assert_equal(smartdispatch.generate_name_from_command(command)[date_length:], expected)
 
     max_length_arg = 7
     long_arg = "veryverylongarg1"
@@ -19,17 +19,17 @@ def test_generate_name_from_command():
     expected = command.split()
     expected[1] = long_arg[-max_length_arg:]
     expected = "_".join(expected)
-    assert_equal(smartdispatch.generate_name_from_command(command, max_length_arg)[date_lenght:], expected)
+    assert_equal(smartdispatch.generate_name_from_command(command, max_length_arg)[date_length:], expected)
 
     max_length = 23
     command = "command veryverylongarg1 veryverylongarg1 veryverylongarg1 veryverylongarg1"
     expected = command[:max_length].replace(" ", "_")
-    assert_equal(smartdispatch.generate_name_from_command(command, max_length=max_length + date_lenght)[date_lenght:], expected)
+    assert_equal(smartdispatch.generate_name_from_command(command, max_length=max_length + date_length)[date_length:], expected)
 
     # Test path arguments in command
     command = "command path/number/one path/number/two"
     expected = "command_pathnumberone_pathnumbertwo"
-    assert_equal(smartdispatch.generate_name_from_command(command)[date_lenght:], expected)
+    assert_equal(smartdispatch.generate_name_from_command(command)[date_length:], expected)
 
 
 def test_get_commands_from_file():
