@@ -86,18 +86,12 @@ def main():
     if args.pool is None:
         args.pool = command_manager.get_nb_commands_to_run()
 
-    worker_command = 'smart_worker.py "{0}" "{1}"'.format(command_manager._commands_filename, path_job_logs)
-    # Replace commands with `args.pool` workers
-    commands = [worker_command] * args.pool
-
-    # Add redirect for output and error logs
-    for i, command in enumerate(commands):
-        # Change directory before executing command
-        commands[i] = 'cd "{cwd}"; '.format(cwd=os.getcwd()) + commands[i]
-        # Log command's output and command's error
-        log_filename = os.path.join(path_job_logs, smartdispatch.generate_name_from_command(command, max_length_arg=30))
-        commands[i] += ' 1>> "{output_log}"'.format(output_log=log_filename + ".o")
-        commands[i] += ' 2>> "{error_log}"'.format(error_log=log_filename + ".e")
+    # Generating all the worker commands
+    COMMAND_STRING = 'cd "{cwd}"; smart_worker.py "{commands_file}" "{log_folder}" '\
+                     '1>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{ID}.o" '\
+                     '2>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{ID}.e" '
+    COMMAND_STRING = COMMAND_STRING.format(cwd=os.getcwd(), commands_file=command_manager._commands_filename, log_folder=path_job_logs)
+    commands = [COMMAND_STRING.format(ID=i) for i in range(args.pool)]
 
     # TODO: use args.memPerNode instead of args.memPerNode
     queue = Queue(args.queueName, CLUSTER_NAME, args.walltime, args.coresPerNode, args.gpusPerNode, np.inf, args.modules)
