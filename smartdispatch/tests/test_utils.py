@@ -3,6 +3,7 @@ import os
 import time
 import tempfile
 import shutil
+import unittest
 
 from subprocess import Popen, PIPE
 
@@ -12,12 +13,25 @@ from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_array_equal
 
 
+class PrintBoxedTests(unittest.TestCase):
+
+    def setUp(self):
+        self.empty = ''
+        self.text = "This is weird test for a visual thing.\nWell maybe it's fine to test it's working."
+
+    def test_print_boxed(self):
+        utils.print_boxed(self.empty)
+
+    def test_print_boxed_empty(self):
+        utils.print_boxed(self.text)
+
+
 def test_chunks():
     sequence = range(10)
 
     for n in range(1, 11):
         expected = []
-        for start, end in zip(range(0, len(sequence), n), range(n, len(sequence)+n, n)):
+        for start, end in zip(range(0, len(sequence), n), range(n, len(sequence) + n, n)):
             expected.append(sequence[start:end])
 
         assert_array_equal(list(utils.chunks(sequence, n)), expected, "n:{0}".format(n))

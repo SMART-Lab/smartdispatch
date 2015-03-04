@@ -12,8 +12,8 @@ from contextlib import contextmanager
 
 def print_boxed(string):
     splitted_string = string.split('\n')
-    max_len = len(max(splitted_string, key=len))
-    box_line = (u"\u2500" * (max_len + 2))
+    max_len = max(map(len, splitted_string))
+    box_line = u"\u2500" * (max_len + 2)
 
     out = u"\u250c" + box_line + u"\u2510\n"
     out += '\n'.join([u"\u2502 {} \u2502".format(line.ljust(max_len)) for line in splitted_string])
@@ -22,18 +22,14 @@ def print_boxed(string):
 
 
 def yes_no_prompt(query, default=None):
-    if default is None:
-        prompt = " [y/n] "
-    elif default == "y":
-        prompt = " [Y/n] "
-    elif default == "n":
-        prompt = " [y/N] "
-    else:
-        raise ValueError("invalid default answer: '{}'".format(default))
+    available_prompts = {None: " [y/n] ", 'y': " [Y/n] ", 'n': " [y/N] "}
+
+    if default not in available_prompts:
+        raise ValueError("Invalid default: '{}'".format(default))
 
     while True:
         try:
-            answer = raw_input("{0}{1}".format(query, prompt))
+            answer = raw_input("{0}{1}".format(query, available_prompts[default]))
             return strtobool(answer)
         except ValueError:
             if answer == '' and default is not None:

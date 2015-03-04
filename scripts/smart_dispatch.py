@@ -61,7 +61,7 @@ def main():
         if args.mode == "launch":
             command_manager.set_commands_to_run(commands)
         else:
-            # Verifying if there is failed commands
+            # Verifying if there is are failed commands
             failed_commands = command_manager.get_failed_commands()
             if len(failed_commands) > 0:
                 FAILED_COMMAND_MESSAGE = dedent("""\
