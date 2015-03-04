@@ -23,10 +23,8 @@ def test_generate_name_from_command():
     assert_equal(smartdispatch.generate_name_from_command(command, max_length_arg)[date_lenght:], expected)
 
     max_length = 23
-    long_arg = "veryverylongarg1"
     command = "command veryverylongarg1 veryverylongarg1 veryverylongarg1 veryverylongarg1"
-    expected = command.split()
-    expected = "_".join(expected)[max_length:]
+    expected = command[max_length:]
     assert_equal(smartdispatch.generate_name_from_command(command, max_length=max_length + date_lenght)[date_lenght:], expected)
 
     # Test path arguments in command
