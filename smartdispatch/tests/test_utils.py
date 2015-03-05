@@ -46,7 +46,7 @@ def test_slugify():
     testing_arguments = [("command", "command"),
                          ("/path/to/arg2/", "pathtoarg2"),
                          ("!\"/$%?&*()[]~{<>'.#|\\", ""),
-                         (u"éèàëöüùò±@£¢¤¬¦²³¼½¾", "eeaeouuo23141234"),  # ¼ => 1/4 => 14
+                         ("éèàëöüùò±@£¢¤¬¦²³¼½¾", "eeaeouuo23141234"),  # ¼ => 1/4 => 14
                          ("arg with space", "arg_with_space")]
 
     for arg, expected in testing_arguments:
