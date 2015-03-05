@@ -57,7 +57,7 @@ def slugify(value):
     ---------
     https://github.com/django/django/blob/1.7c3/django/utils/text.py#L436
     """
-    value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore').decode('ascii')
+    value = unicodedata.normalize('NFKD', unicode(value, "UTF-8")).encode('ascii', 'ignore').decode('ascii')
     value = re.sub('[^\w\s-]', '', value).strip().lower()
     return str(re.sub('[-\s]+', '_', value))
 
