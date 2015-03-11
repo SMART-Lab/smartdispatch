@@ -152,9 +152,6 @@ def parse_arguments():
             parser.error("You need to specify a command to launch.")
         if args.queueName not in AVAILABLE_QUEUES and ((args.coresPerNode is None and args.gpusPerNode is None) or args.walltime is None):
             parser.error("Unknown queue, --coresPerNode/--gpusPerNode and --walltime must be set.")
-    else:
-        if args.pool is None:
-            resume_parser.error("The resume feature only works with the --pool argument.")
 
     return args
 
