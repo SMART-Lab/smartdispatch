@@ -176,6 +176,7 @@ def get_job_folders(jobname):
 
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
+    if not os.path.exists(os.path.join(path_job_logs, "worker")):
         os.makedirs(os.path.join(path_job_logs, "worker"))
 
     return path_job, path_job_logs, path_job_commands
