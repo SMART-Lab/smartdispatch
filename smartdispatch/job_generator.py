@@ -34,7 +34,7 @@ class JobGenerator(object):
     def __init__(self, queue, commands, command_params={}, base_path="./"):
         self.commands = commands
         self.queue = queue
-        self.job_log_filename = '"{base_path}/../logs/job/"$PBS_JOBID".{{ext}}"'.format(base_path=base_path)
+        self.job_log_filename = '"{base_path}/logs/job/"$PBS_JOBID".{{ext}}"'.format(base_path=base_path)
 
         self.nb_cores_per_command = command_params.get('nb_cores_per_command', 1)
         self.nb_gpus_per_command = command_params.get('nb_gpus_per_command', 1)
