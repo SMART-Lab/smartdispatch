@@ -99,7 +99,7 @@ def main():
                       'mem_per_command': None  # args.memPerCommand
                       }
 
-    job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME)
+    job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME, path_job)
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
     # Launch the jobs
@@ -175,6 +175,8 @@ def get_job_folders(jobname):
         os.makedirs(path_job_logs)
     if not os.path.exists(os.path.join(path_job_logs, "worker")):
         os.makedirs(os.path.join(path_job_logs, "worker"))
+    if not os.path.exists(os.path.join(path_job_logs, "job")):
+        os.makedirs(os.path.join(path_job_logs, "job"))
 
     return path_job, path_job_logs, path_job_commands
 
@@ -189,6 +191,7 @@ def create_job_folders(jobname):
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
         os.makedirs(os.path.join(path_job_logs, "worker"))
+        os.makedirs(os.path.join(path_job_logs, "job"))
 
     return path_job, path_job_logs, path_job_commands
 
