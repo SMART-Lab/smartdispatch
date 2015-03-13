@@ -2,17 +2,35 @@
 [![Coverage Status](https://coveralls.io/repos/SMART-Lab/smartdispatch/badge.png)](https://coveralls.io/r/SMART-Lab/smartdispatch)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/SMART-Lab/smartdispatch/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/SMART-Lab/smartdispatch/?branch=master)
 # Smart Dispatch
-A batch launcher for supercomputers using qsub/msub (Torque).
+An easy to use job launcher for supercomputers with PBS compatible job manager.
+
+
+## Features
+- Launch multiple jobs with a single line.
+- Automactically generate combinations of arguments. *(see examples)*
+- Automatic ressource management. Determine for you the optimal fit for your commands on nodes.
+- Resume batch of commands.
+- Easily manage logs.
+- Advanced mode for complete control.
+
 
 ## Installing
 `pip install git+https://github.com/SMART-Lab/smartdispatch`
 
+
 ## Usage
 See `smart_dispatch.py --help`
+Output and error logs in are saved in : `./SMART_DISPATCH_LOGS/{batch_id}/logs/`.
+
 
 ## Examples
-###Basic
-A batch composed of four variations of a simple command.
+###Launch Job
+`smart_dispatch.py -q qtest@mp2 launch python my_script.py 2 80 tanh 0.1`
+
+This will launch `python my_script.py 2 80 tanh 0.1` on the queue qtest@mp2.
+
+###Launch Jobs Batch
+Automactically generate commands from combinations of arguments.
 
 `smart_dispatch.py -q qtest@mp2 launch python my_script.py [1 2] 80 [tanh sigmoid] 0.1`
 
@@ -23,16 +41,8 @@ python my_script.py 1 80 tanh 0.1
 python my_script.py 2 80 sigmoid 0.1
 python my_script.py 2 80 tanh 0.1
 ```
-The output/error logs in are saved in the folder `./SMART_DISPATCH_LOGS/{job_id}/logs/`.
 
+###Resuming Job
+Given the `batch_id` (i.e. folder's name in `SMART_DISPATCH_LOGS/{batch_id}/`) one can relaunch jobs that did not finished executing(maybe because of exeeded walltime).
 
-###Using a pool of workers
-`smart_dispatch.py -q qtest@mp2 -p 2 launch python my_script.py [1 2] 80 [tanh sigmoid] 0.1`
-
-This will behave exactly the same way as the basic example above but the number of jobs launched on the supercomputer will be 2 instead of 4 and each job will be in charge of running 2 commands each.
-
-
-###Resuming a job (if launched using pool of workers)
-Given the `job_id` (i.e. folder's name in `SMART_DISPATCH_LOGS/{job_id}/`) one can relaunch jobs that did not finished executing(maybe because of exeeded walltime).
-
-`smart_dispatch.py -q qtest@mp2 -p 2 resume job_id`
+`smart_dispatch.py -q qtest@mp2 resume {batch_id}`
