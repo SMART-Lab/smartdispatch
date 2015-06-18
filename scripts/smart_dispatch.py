@@ -77,7 +77,9 @@ def main():
             if not utils.yes_no_prompt("Do you want to continue?", 'n'):
                 exit()
 
-        command_manager.reset_running_commands()
+        if not args.only_pending:
+            command_manager.reset_running_commands()
+
         nb_commands = command_manager.get_nb_commands_to_run()
 
     # If no pool size is specified the number of commands is taken
@@ -142,6 +144,7 @@ def parse_arguments():
     launch_parser.add_argument("commandAndOptions", help="Options for the commands.", nargs=argparse.REMAINDER)
 
     resume_parser = subparsers.add_parser('resume', help="Resume jobs from batch UID.")
+    resume_parser.add_argument('--only_pending', action='store_true', help='Resume only pending commands.')
     resume_parser.add_argument("batch_uid", help="Batch UID of the jobs to resume.")
 
     args = parser.parse_args()
