@@ -175,6 +175,10 @@ def _gen_job_paths(jobname):
 
 
 def get_job_folders(jobname):
+    if os.path.isdir(jobname):
+        # We assume `jobname` is `path_job` repo, we extract the real `jobname`.
+        jobname = os.path.basename(os.path.abspath(jobname))
+
     path_job, path_job_logs, path_job_commands = _gen_job_paths(jobname)
 
     if not os.path.exists(path_job_commands):
