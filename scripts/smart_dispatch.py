@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 import os
+import sys
 import argparse
 import time as t
 import numpy as np
@@ -101,6 +103,14 @@ def main():
 
     job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME, path_job)
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
+
+    # Keep an history of command lines i.e. smart_dispatch.py commands.
+    with utils.open_with_lock(os.path.join(path_job, "command_line_history.txt"), 'a') as command_line_history_file:
+        command_line_history_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+        command_line = " ".join(sys.argv)
+        command_line = command_line.replace('"', r'\"')  # Make sure we can paste the command line as-is
+        command_line = re.sub(r'(\[)([^\[\]]*\\ [^\[\]]*)(\])', r'"\1\2\3"', command_line)  # Make sure we can paste the command line as-is
+        command_line_history_file.write(command_line + "\n\n")
 
     # Launch the jobs
     print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
