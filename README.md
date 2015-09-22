@@ -43,7 +43,7 @@ python my_script.py 2 80 sigmoid 0.1
 python my_script.py 2 80 tanh 0.1
 ```
 
-Another possiblility is to generate range of argumenst.
+Another possiblility is to generate argument from a range.
 ``smart_dispatch.py -q qtest@mp2 launch python my_script.py [1:4]``
 
 Will generate:
