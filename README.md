@@ -43,6 +43,29 @@ python my_script.py 2 80 sigmoid 0.1
 python my_script.py 2 80 tanh 0.1
 ```
 
+Another possiblility is to generate range of argumenst.
+``smart_dispatch.py -q qtest@mp2 launch python my_script.py [1:4]``
+
+Will generate:
+```
+python my_script.py 1
+python my_script.py 2
+python my_script.py 3
+```
+
+You can also add a step size to the range as the 3rd argument.
+``smart_dispatch.py -q qtest@mp2 launch python my_script.py [1:10:2]``
+
+Will generate:
+```
+python my_script.py 1
+python my_script.py 3
+python my_script.py 5
+python my_script.py 7
+python my_script.py 9
+
+```
+
 ### Resuming job/batch
 `smart_dispatch.py -q qtest@mp2 resume {batch_id}`
 
