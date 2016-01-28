@@ -5,6 +5,7 @@ import os
 import argparse
 import subprocess
 import logging
+import time as t
 
 from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
@@ -44,10 +45,21 @@ def main():
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 
-        with open(stdout_filename, 'w') as stdout_file:
-            with open(stderr_filename, 'w') as stderr_file:
-                stdout_file.write("# " + command + '\n')
-                stderr_file.write("# " + command + '\n')
+        stdout_already_exists = os.path.isfile(stdout_filename)
+        stderr_already_exists = os.path.isfile(stderr_filename)
+
+        with open(stdout_filename, 'a') as stdout_file:
+            with open(stderr_filename, 'a') as stderr_file:
+                if not stdout_already_exists:
+                    stdout_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+                else:
+                    stdout_file.write("# " + command + '\n')
+
+                if not stderr_already_exists:
+                    stderr_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+                else:
+                    stderr_file.write("# " + command + '\n')
+
                 stdout_file.flush()
                 stderr_file.flush()
 
