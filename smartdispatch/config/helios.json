@@ -1,6 +1,6 @@
 {
     "gpu_8": {
-        "ram": 128,
+        "ram": 126,
         "modules": ["cuda/7.0.28"],
         "cores": 20,
         "max_walltime": "12:00:00",
@@ -8,7 +8,7 @@
         "nodes": 15
     },
     "gpu_4": {
-        "ram": 64,
+        "ram": 63,
         "modules": ["cuda/7.0.28"],
         "cores": 10,
         "max_walltime": "12:00:00",
@@ -24,7 +24,7 @@
         "nodes": 15
     },
     "test": {
-        "ram": 128,
+        "ram": 126,
         "modules": ["cuda/7.0.28"],
         "cores": 20,
         "max_walltime": "15:00",
