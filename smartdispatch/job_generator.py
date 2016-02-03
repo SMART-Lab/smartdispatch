@@ -13,6 +13,8 @@ def job_generator_factory(queue, commands, command_params={}, cluster_name=None,
         return MammouthJobGenerator(queue, commands, command_params, base_path)
     elif cluster_name == "helios":
         return HeliosJobGenerator(queue, commands, command_params, base_path)
+    elif cluster_name == "hades":
+        return HadesJobGenerator(queue, commands, command_params, base_path)
 
     return JobGenerator(queue, commands, command_params, base_path)
 
@@ -109,6 +111,16 @@ class MammouthJobGenerator(JobGenerator):
                 pbs.resources['nodes'] = re.sub("ppn=[0-9]+", "ppn=1", pbs.resources['nodes'])
 
         return pbs_list
+
+
+class HadesJobGenerator(JobGenerator):
+
+    def generate_pbs(self):
+        self.queue.nb_cpus_per_node = self.queue.nb_gpus_per_node
+        self.queue.nb_gpus_per_node = 0
+        # Hades does not follow gpus standard and use ppn instead
+
+        return JobGenerator.generate_pbs(self)
 
 
 class GuilliminJobGenerator(JobGenerator):
