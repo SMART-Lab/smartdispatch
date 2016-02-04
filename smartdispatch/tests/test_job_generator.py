@@ -1,12 +1,13 @@
 from nose.tools import assert_true, assert_false, assert_equal, assert_raises
 
 import os
-from smartdispatch.queue import Queue
-from smartdispatch.job_generator import JobGenerator, GuilliminJobGenerator, MammouthJobGenerator, HeliosJobGenerator
-from smartdispatch.job_generator import job_generator_factory
 import unittest
 import tempfile
 import shutil
+from smartdispatch.queue import Queue
+from smartdispatch.job_generator import JobGenerator, job_generator_factory
+from smartdispatch.job_generator import HeliosJobGenerator, HadesJobGenerator
+from smartdispatch.job_generator import GuilliminJobGenerator, MammouthJobGenerator
 
 
 class TestJobGenerator(unittest.TestCase):
@@ -165,6 +166,36 @@ class TestHeliosQueue(unittest.TestCase):
         assert_true("gpus=6" in job_generator.generate_pbs()[0].__str__())
 
 
+class TestHadesQueue(unittest.TestCase):
+
+    def setUp(self):
+        self.queue = Queue("@hades", "hades")
+
+        self.commands4 = ["echo 1", "echo 2", "echo 3", "echo 4"]
+        self.pbs4 = HadesJobGenerator(self.queue, self.commands4).generate_pbs()
+
+        # 8 commands chosen because there is 8 cores but still should be split because there is 6 gpu
+        self.commands8 = ["echo 1", "echo 2", "echo 3", "echo 4", "echo 5", "echo 6", "echo 7", "echo 8"]
+        self.pbs8 = HadesJobGenerator(self.queue, self.commands8).generate_pbs()
+
+    def test_generate_pbs_ppn(self):
+        assert_true("ppn={}".format(len(self.commands4)) in self.pbs4[0].__str__())
+
+    def test_generate_pbs_no_gpus_used(self):
+        # Hades use ppn instead og the gpus flag and breaks if gpus is there
+        assert_false("gpus=" in self.pbs4[0].__str__())
+
+    def test_pbs_split_1_job(self):
+        assert_equal(len(self.pbs4), 1)
+
+    def test_pbs_split_2_job(self):
+        assert_equal(len(self.pbs8), 2)
+
+    def test_pbs_split_2_job_nb_commands(self):
+        assert_true("ppn=6" in self.pbs8[0].__str__())
+        assert_true("ppn=2" in self.pbs8[1].__str__())
+
+
 def test_job_generator_factory():
     queue = {"queue_name": "qtest"}
     commands = []
@@ -177,8 +208,12 @@ def test_job_generator_factory():
     job_generator = job_generator_factory(queue, commands, cluster_name="helios")
     assert_true(isinstance(job_generator, HeliosJobGenerator))
 
+    job_generator = job_generator_factory(queue, commands, cluster_name="hades")
+    assert_true(isinstance(job_generator, HadesJobGenerator))
+
     job_generator = job_generator_factory(queue, commands, cluster_name=None)
     assert_true(isinstance(job_generator, JobGenerator))
     assert_true(not isinstance(job_generator, GuilliminJobGenerator))
     assert_true(not isinstance(job_generator, MammouthJobGenerator))
     assert_true(not isinstance(job_generator, HeliosJobGenerator))
+    assert_true(not isinstance(job_generator, HadesJobGenerator))

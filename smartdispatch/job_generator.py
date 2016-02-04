@@ -116,11 +116,14 @@ class MammouthJobGenerator(JobGenerator):
 class HadesJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        self.queue.nb_cpus_per_node = self.queue.nb_gpus_per_node
-        self.queue.nb_gpus_per_node = 0
-        # Hades does not follow gpus standard and use ppn instead
+        pbs_list = JobGenerator.generate_pbs(self)
 
-        return JobGenerator.generate_pbs(self)
+        for pbs in pbs_list:
+            gpus = re.match(".*gpus=([0-9]+)", pbs.resources['nodes']).group(1)
+            pbs.resources['nodes'] = re.sub("ppn=[0-9]+", "ppn={}".format(gpus), pbs.resources['nodes'])
+            pbs.resources['nodes'] = re.sub(":gpus=[0-9]+", "", pbs.resources['nodes'])
+
+        return pbs_list
 
 
 class GuilliminJobGenerator(JobGenerator):
