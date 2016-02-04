@@ -1,0 +1,10 @@
+{
+    "@hades": {
+        "ram": 23,
+        "modules": ["CUDA/7.5"],
+        "cores": 8,
+        "max_walltime": "48:00:00",
+        "gpus": 6,
+        "nodes": 9
+    }
+}
