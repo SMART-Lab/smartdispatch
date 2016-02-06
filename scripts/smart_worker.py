@@ -50,12 +50,12 @@ def main():
 
         with open(stdout_filename, 'a') as stdout_file:
             with open(stderr_filename, 'a') as stderr_file:
-                if not stdout_already_exists:
+                if stdout_already_exists:
                     stdout_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
                 else:
                     stdout_file.write("# " + command + '\n')
 
-                if not stderr_already_exists:
+                if stderr_already_exists:
                     stderr_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
                 else:
                     stderr_file.write("# " + command + '\n')
