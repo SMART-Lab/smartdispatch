@@ -4,6 +4,7 @@ import os
 import re
 import itertools
 import time as t
+from os.path import join as pjoin
 
 import smartdispatch
 from smartdispatch import utils
@@ -119,3 +120,23 @@ def get_available_queues(cluster_name=utils.detect_cluster()):
 
     queues_infos = utils.load_dict_from_json_file(config_filepath)
     return queues_infos
+
+
+def log_command_line(path_job, command_line):
+    """ Logs a command line in a job folder.
+
+    The command line is append to a file named 'command_line.log' that resides
+    in the given job folder. The current date and time is also added along
+    each command line logged.
+
+    Notes
+    -----
+    Commands save in log file might differ from sys.argv since we want to make sure
+    we can paste the command line as-is in the terminal. This means that the quotes
+    symbole " and the square brackets will be escaped.
+    """
+    with utils.open_with_lock(pjoin(path_job, "command_line.log"), 'a') as command_line_log:
+        command_line_log.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+        command_line = command_line.replace('"', r'\"')  # Make sure we can paste the command line as-is
+        command_line = re.sub(r'(\[)([^\[\]]*\\ [^\[\]]*)(\])', r'"\1\2\3"', command_line)  # Make sure we can paste the command line as-is
+        command_line_log.write(command_line + "\n\n")

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
 import os
 import sys
 import argparse
 import time as t
 import numpy as np
+from os.path import join as pjoin
 from subprocess import check_output
 from textwrap import dedent
 
@@ -55,7 +55,11 @@ def main():
     else:
         raise ValueError("Unknown subcommand!")
 
-    command_manager = CommandManager(os.path.join(path_job_commands, "commands.txt"))
+    # Keep a log of the command line in the job folder.
+    command_line = " ".join(sys.argv)
+    smartdispatch.log_command_line(path_job, command_line)
+
+    command_manager = CommandManager(pjoin(path_job_commands, "commands.txt"))
 
     # If resume mode, reset running jobs
     if args.mode == "launch":
@@ -84,7 +88,7 @@ def main():
 
     # If no pool size is specified the number of commands is taken
     if args.pool is None:
-        args.pool = command_manager.get_nb_commands_to_run()
+        args.pool = command_manager.get_nb_commands_to_run(command_line)
 
     # Generating all the worker commands
     COMMAND_STRING = 'cd "{cwd}"; smart_worker.py "{commands_file}" "{log_folder}" '\
@@ -104,14 +108,6 @@ def main():
     job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME, path_job)
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
-    # Keep an history of command lines i.e. smart_dispatch.py commands.
-    with utils.open_with_lock(os.path.join(path_job, "command_line_history.txt"), 'a') as command_line_history_file:
-        command_line_history_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
-        command_line = " ".join(sys.argv)
-        command_line = command_line.replace('"', r'\"')  # Make sure we can paste the command line as-is
-        command_line = re.sub(r'(\[)([^\[\]]*\\ [^\[\]]*)(\])', r'"\1\2\3"', command_line)  # Make sure we can paste the command line as-is
-        command_line_history_file.write(command_line + "\n\n")
-
     # Launch the jobs
     print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
     print "Batch UID:\n{batch_uid}".format(batch_uid=jobname)
@@ -121,7 +117,7 @@ def main():
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
             jobs_id += [qsub_output.strip()]
 
-        with utils.open_with_lock(os.path.join(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
+        with utils.open_with_lock(pjoin(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
             jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
             jobs_id_file.writelines("\n".join(jobs_id) + "\n")
         print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))
@@ -167,10 +163,10 @@ def parse_arguments():
 
 
 def _gen_job_paths(jobname):
-    path_smartdispatch_logs = os.path.join(os.getcwd(), LOGS_FOLDERNAME)
-    path_job = os.path.join(path_smartdispatch_logs, jobname)
-    path_job_logs = os.path.join(path_job, 'logs')
-    path_job_commands = os.path.join(path_job, 'commands')
+    path_smartdispatch_logs = pjoin(os.getcwd(), LOGS_FOLDERNAME)
+    path_job = pjoin(path_smartdispatch_logs, jobname)
+    path_job_logs = pjoin(path_job, 'logs')
+    path_job_commands = pjoin(path_job, 'commands')
 
     return path_job, path_job_logs, path_job_commands
 
@@ -183,10 +179,10 @@ def get_job_folders(jobname):
 
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
-    if not os.path.exists(os.path.join(path_job_logs, "worker")):
-        os.makedirs(os.path.join(path_job_logs, "worker"))
-    if not os.path.exists(os.path.join(path_job_logs, "job")):
-        os.makedirs(os.path.join(path_job_logs, "job"))
+    if not os.path.exists(pjoin(path_job_logs, "worker")):
+        os.makedirs(pjoin(path_job_logs, "worker"))
+    if not os.path.exists(pjoin(path_job_logs, "job")):
+        os.makedirs(pjoin(path_job_logs, "job"))
 
     return path_job, path_job_logs, path_job_commands
 
@@ -200,8 +196,8 @@ def create_job_folders(jobname):
 
     if not os.path.exists(path_job_logs):
         os.makedirs(path_job_logs)
-        os.makedirs(os.path.join(path_job_logs, "worker"))
-        os.makedirs(os.path.join(path_job_logs, "job"))
+        os.makedirs(pjoin(path_job_logs, "worker"))
+        os.makedirs(pjoin(path_job_logs, "job"))
 
     return path_job, path_job_logs, path_job_commands
 
