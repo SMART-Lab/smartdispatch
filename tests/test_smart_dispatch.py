@@ -23,7 +23,6 @@ class TestSmartdispatcher(unittest.TestCase):
         os.chdir(self.testing_dir)
 
     def tearDown(self):
-        print "Tear down"
         os.chdir(self._cwd)
         shutil.rmtree(self.testing_dir)
 
@@ -37,7 +36,7 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(len(os.listdir(self.logs_dir)), 1)
 
     def test_main_resume(self):
-        # SetUp
+        # Setup
         call(self.launch_command, shell=True)
         batch_uid = os.listdir(self.logs_dir)[0]
 
@@ -60,6 +59,32 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(len(os.listdir(self.logs_dir)), 1)
         assert_equal(len(open(running_commands_file).readlines()), 0)
         assert_equal(len(open(pending_commands_file).readlines()), len(commands))
+
+		# Test when batch_uid is a path instead of a jobname.
+		# Setup
+        call(self.launch_command, shell=True)
+        batch_uid = os.path.join(self.logs_dir, os.listdir(self.logs_dir)[0])
+
+		# Simulate that some commands are in the running state.
+        path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
+        pending_commands_file = pjoin(path_job_commands, "commands.txt")
+        running_commands_file = pjoin(path_job_commands, "running_commands.txt")
+        commands = open(pending_commands_file).read().strip().split("\n")
+        with open(running_commands_file, 'w') as running_commands:
+            running_commands.write("\n".join(commands[::2]) + "\n")
+        with open(pending_commands_file, 'w') as pending_commands:
+            pending_commands.write("\n".join(commands[1::2]) + "\n")
+
+        # Actual test (should move running commands back to pending).
+        exit_status = call(self.resume_command.format(batch_uid), shell=True)
+
+        # Test validation
+        assert_equal(exit_status, 0)
+        assert_true(os.path.isdir(self.logs_dir))
+        assert_equal(len(os.listdir(self.logs_dir)), 1)
+        assert_equal(len(open(running_commands_file).readlines()), 0)
+        assert_equal(len(open(pending_commands_file).readlines()), len(commands))
+
 
     def test_main_resume_only_pending(self):
         # SetUp
