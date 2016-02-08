@@ -110,16 +110,34 @@ def get_available_queues(cluster_name=utils.detect_cluster()):
         return {}
 
     smartdispatch_dir, _ = os.path.split(smartdispatch.__file__)
-    config_dir = os.path.join(smartdispatch_dir, 'config')
+    config_dir = pjoin(smartdispatch_dir, 'config')
 
     config_filename = cluster_name + ".json"
-    config_filepath = os.path.join(config_dir, config_filename)
+    config_filepath = pjoin(config_dir, config_filename)
 
     if not os.path.isfile(config_filepath):
         return {}  # Unknown cluster
 
     queues_infos = utils.load_dict_from_json_file(config_filepath)
     return queues_infos
+
+
+def get_job_folders(path, jobname, create_if_needed=False):
+    """ Get all folder paths for a specific job (creating them if needed). """
+    path_job = pjoin(path, jobname)
+    path_job_logs = pjoin(path_job, 'logs')
+    path_job_commands = pjoin(path_job, 'commands')
+
+    if not os.path.isdir(path_job_commands):
+        os.makedirs(path_job_commands)
+    if not os.path.isdir(path_job_logs):
+        os.makedirs(path_job_logs)
+    if not os.path.isdir(pjoin(path_job_logs, "worker")):
+        os.makedirs(pjoin(path_job_logs, "worker"))
+    if not os.path.isdir(pjoin(path_job_logs, "job")):
+        os.makedirs(pjoin(path_job_logs, "job"))
+
+    return path_job, path_job_logs, path_job_commands
 
 
 def log_command_line(path_job, command_line):

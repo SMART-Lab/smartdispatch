@@ -146,6 +146,52 @@ def test_get_available_queues():
     assert_true(len(queues_infos) > 0)
 
 
+def test_get_job_folders():
+    temp_dir = tempfile.mkdtemp()
+    jobname = "this_is_the_name_of_my_job"
+    job_folders_paths = smartdispatch.get_job_folders(temp_dir, jobname)
+    path_job, path_job_logs, path_job_commands = job_folders_paths
+
+    assert_true(jobname in path_job)
+    assert_true(os.path.isdir(path_job))
+    assert_equal(os.path.basename(path_job), jobname)
+
+    assert_true(jobname in path_job_logs)
+    assert_true(os.path.isdir(path_job_logs))
+    assert_true(os.path.isdir(pjoin(path_job_logs, 'worker')))
+    assert_true(os.path.isdir(pjoin(path_job_logs, 'job')))
+    assert_true(os.path.isdir(path_job_logs))
+    assert_equal(os.path.basename(path_job_logs), "logs")
+
+    assert_true(jobname in path_job_commands)
+    assert_true(os.path.isdir(path_job_commands))
+    assert_equal(os.path.basename(path_job_commands), "commands")
+
+    # In theory the following should not create new folders.
+    # Insteead it will return the paths to existing folders.
+    jobname += "2"
+    os.rename(path_job, path_job + "2")
+    job_folders_paths = smartdispatch.get_job_folders(temp_dir, jobname)
+    path_job, path_job_logs, path_job_commands = job_folders_paths
+
+    assert_true(jobname in path_job)
+    assert_true(os.path.isdir(path_job))
+    assert_equal(os.path.basename(path_job), jobname)
+
+    assert_true(jobname in path_job_logs)
+    assert_true(os.path.isdir(path_job_logs))
+    assert_true(os.path.isdir(pjoin(path_job_logs, 'worker')))
+    assert_true(os.path.isdir(pjoin(path_job_logs, 'job')))
+    assert_true(os.path.isdir(path_job_logs))
+    assert_equal(os.path.basename(path_job_logs), "logs")
+
+    assert_true(jobname in path_job_commands)
+    assert_true(os.path.isdir(path_job_commands))
+    assert_equal(os.path.basename(path_job_commands), "commands")
+
+    shutil.rmtree(temp_dir)
+
+
 def test_log_command_line():
     temp_dir = tempfile.mkdtemp()
     command_line_log_file = pjoin(temp_dir, "command_line.log")

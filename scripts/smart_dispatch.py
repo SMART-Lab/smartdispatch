@@ -20,7 +20,6 @@ from smartdispatch import utils
 import logging
 import smartdispatch
 
-
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 CLUSTER_NAME = utils.detect_cluster()
 AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
@@ -32,6 +31,7 @@ def main():
     logging.root.setLevel(logging.INFO)
 
     args = parse_arguments()
+    path_smartdispatch_logs = pjoin(os.getcwd(), LOGS_FOLDERNAME)
 
     # Check if RESUME or LAUNCH mode
     if args.mode == "launch":
@@ -48,12 +48,19 @@ def main():
         commands = smartdispatch.replace_uid_tag(commands)
         nb_commands = len(commands)  # For print at the end
 
-        path_job, path_job_logs, path_job_commands = create_job_folders(jobname)
     elif args.mode == "resume":
         jobname = args.batch_uid
-        path_job, path_job_logs, path_job_commands = get_job_folders(args.batch_uid)
+        if os.path.isdir(jobname):
+            # We assume `jobname` is `path_job` repo, we extract the real `jobname`.
+            jobname = os.path.basename(os.path.abspath(jobname))
+
+        if not os.path.isdir(pjoin(path_smartdispatch_logs, jobname)):
+            raise LookupError("Batch UID ({0}) does not exist! Cannot resume.".format(jobname))
     else:
         raise ValueError("Unknown subcommand!")
+
+    job_folders_paths = smartdispatch.get_job_folders(path_smartdispatch_logs, jobname)
+    path_job, path_job_logs, path_job_commands = job_folders_paths
 
     # Keep a log of the command line in the job folder.
     command_line = " ".join(sys.argv)
@@ -163,46 +170,6 @@ def parse_arguments():
             parser.error("Unknown queue, --coresPerNode/--gpusPerNode and --walltime must be set.")
 
     return args
-
-
-def _gen_job_paths(jobname):
-    path_smartdispatch_logs = pjoin(os.getcwd(), LOGS_FOLDERNAME)
-    path_job = pjoin(path_smartdispatch_logs, jobname)
-    path_job_logs = pjoin(path_job, 'logs')
-    path_job_commands = pjoin(path_job, 'commands')
-
-    return path_job, path_job_logs, path_job_commands
-
-
-def get_job_folders(jobname):
-    path_job, path_job_logs, path_job_commands = _gen_job_paths(jobname)
-
-    if not os.path.exists(path_job_commands):
-        raise LookupError("Batch UID ({0}) does not exist! Cannot resume.".format(jobname))
-
-    if not os.path.exists(path_job_logs):
-        os.makedirs(path_job_logs)
-    if not os.path.exists(pjoin(path_job_logs, "worker")):
-        os.makedirs(pjoin(path_job_logs, "worker"))
-    if not os.path.exists(pjoin(path_job_logs, "job")):
-        os.makedirs(pjoin(path_job_logs, "job"))
-
-    return path_job, path_job_logs, path_job_commands
-
-
-def create_job_folders(jobname):
-    """Creates the folders where the logs, commands and QSUB files will be saved."""
-    path_job, path_job_logs, path_job_commands = _gen_job_paths(jobname)
-
-    if not os.path.exists(path_job_commands):
-        os.makedirs(path_job_commands)
-
-    if not os.path.exists(path_job_logs):
-        os.makedirs(path_job_logs)
-        os.makedirs(pjoin(path_job_logs, "worker"))
-        os.makedirs(pjoin(path_job_logs, "job"))
-
-    return path_job, path_job_logs, path_job_commands
 
 
 if __name__ == "__main__":
