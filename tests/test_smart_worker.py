@@ -31,6 +31,9 @@ class TestSmartWorker(unittest.TestCase):
     def test_main(self):
         command = ["smart_worker.py", self.command_manager._commands_filename, self.logs_dir]
         assert_equal(call(command), 0)
+        # Simulate a resume, i.e. re-run the command, the output/error should be concatenated.
+        self.command_manager.set_commands_to_run(self.commands)
+        assert_equal(call(command), 0)
 
         # Check output logs
         filenames = os.listdir(self.logs_dir)
@@ -41,13 +44,29 @@ class TestSmartWorker(unittest.TestCase):
                 uid = os.path.splitext(os.path.basename(log_filename))[0]
                 executed_command = self.commands[self.commands_uid.index(uid)]
 
-                # First line is the executed command in comment
-                header = logfile.readline().strip()
-                assert_equal(header, "# " + executed_command)
+                # Since the command was run twice.
+                for i in range(2):
+                    # First line is the datetime of the executed command in comment.
+                    line = logfile.readline().strip()
 
-                # Next should be the command's output
-                output = logfile.readline().strip()
-                assert_equal(output, executed_command[-1])  # We know those are 'echo' of a digit
+                    if i == 0:
+                        assert_true("Started" in line)
+                    else:
+                        assert_true("Resumed" in line)
+
+                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
+
+                    # Second line is the executed command in comment.
+                    line = logfile.readline().strip()
+                    assert_true(executed_command in line)
+
+                    # Next should be the command's output
+                    line = logfile.readline().strip()
+                    assert_equal(line, executed_command[-1])  # We know those are 'echo' of a digit
+
+                    # Empty line
+                    assert_equal(logfile.readline().strip(), "")
 
                 # Log should be empty now
                 assert_equal("", logfile.read())
@@ -60,9 +79,25 @@ class TestSmartWorker(unittest.TestCase):
                 uid = os.path.splitext(os.path.basename(log_filename))[0]
                 executed_command = self.commands[self.commands_uid.index(uid)]
 
-                # First line is the executed command in comment
-                header = logfile.readline().strip()
-                assert_equal(header, "# " + executed_command)
+                # Since the command was run twice.
+                for i in range(2):
+                    # First line is the datetime of the executed command in comment.
+                    line = logfile.readline().strip()
+
+                    if i == 0:
+                        assert_true("Started" in line)
+                    else:
+                        assert_true("Resumed" in line)
+
+                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
+
+                    # Second line is the executed command in comment.
+                    line = logfile.readline().strip()
+                    assert_true(executed_command in line)
+
+                    # Empty line
+                    assert_equal(logfile.readline().strip(), "")
 
                 # Log should be empty now
                 assert_equal("", logfile.read())

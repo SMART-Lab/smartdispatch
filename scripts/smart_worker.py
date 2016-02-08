@@ -5,6 +5,7 @@ import os
 import argparse
 import subprocess
 import logging
+import time as t
 
 from smartdispatch import utils
 from smartdispatch.command_manager import CommandManager
@@ -44,11 +45,17 @@ def main():
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 
-        with open(stdout_filename, 'w') as stdout_file:
-            with open(stderr_filename, 'w') as stderr_file:
-                stdout_file.write("# " + command + '\n')
-                stderr_file.write("# " + command + '\n')
+        with open(stdout_filename, 'a') as stdout_file:
+            with open(stderr_filename, 'a') as stderr_file:
+                log_datetime = t.strftime("## SMART_DISPATCH - Started on: %Y-%m-%d %H:%M:%S ##\n")
+                if stdout_file.tell() > 0:  # Not the first line in the log file.
+                    log_datetime = t.strftime("\n## SMART_DISPATCH - Resumed on: %Y-%m-%d %H:%M:%S ##\n")
+
+                log_command = "## SMART_DISPATCH - Command: " + command + '\n'
+
+                stdout_file.write(log_datetime + log_command)
                 stdout_file.flush()
+                stderr_file.write(log_datetime + log_command)
                 stderr_file.flush()
 
                 error_code = subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
