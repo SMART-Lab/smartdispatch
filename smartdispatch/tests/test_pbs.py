@@ -72,8 +72,8 @@ class TestPBS(unittest.TestCase):
     def test_str(self):
         # Create simple PBS file
         expected = """#!/bin/bash
-#PBS -V
 #PBS -q qtest@mp2
+#PBS -V
 #PBS -l walltime=01:00:00
 
 # Modules #
@@ -90,11 +90,11 @@ wait"""
         modules = ["CUDA_Toolkit/6.0", "python2.7"]
 
         expected = """#!/bin/bash
-#PBS -A xyz-123-ab
-#PBS -V
 #PBS -q qtest@mp2
-#PBS -l nodes=2:ppn=3:gpus=1
+#PBS -V
+#PBS -A xyz-123-ab
 #PBS -l walltime=01:00:00
+#PBS -l nodes=2:ppn=3:gpus=1
 
 # Modules #
 module load CUDA_Toolkit/6.0

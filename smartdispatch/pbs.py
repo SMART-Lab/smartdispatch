@@ -1,4 +1,5 @@
 import re
+from collections import OrderedDict
 
 regex_walltime = re.compile("(\d+:){1,4}")
 regex_resource_nodes = re.compile("[a-zA-Z0-9]+(:ppn=\d+)?(:gpus=\d+)?(:[a-zA-Z0-9]+)*")
@@ -26,10 +27,10 @@ class PBS(object):
         self.modules = []
         self.commands = []
 
-        self.resources = {}
+        self.resources = OrderedDict()
         self.add_resources(walltime=walltime)
 
-        self.options = {}
+        self.options = OrderedDict()
         self.add_options(q=queue_name)
 
         # Declares that all environment variables in the qsub command's environment are to be exported to the batch job.
