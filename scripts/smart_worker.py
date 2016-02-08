@@ -45,22 +45,17 @@ def main():
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 
-        stdout_already_exists = os.path.isfile(stdout_filename)
-        stderr_already_exists = os.path.isfile(stderr_filename)
-
         with open(stdout_filename, 'a') as stdout_file:
             with open(stderr_filename, 'a') as stderr_file:
-                if stdout_already_exists:
-                    stdout_file.write('\n')
+                log_datetime = t.strftime("## SMART_DISPATCH - Started on: %Y-%m-%d %H:%M:%S ##\n")
+                if stdout_file.tell() > 0:  # Not the first line in the log file.
+                    log_datetime = t.strftime("\n## SMART_DISPATCH - Resumed on: %Y-%m-%d %H:%M:%S ##\n")
 
-                if stderr_already_exists:
-                    stderr_file.write('\n')
+                log_command = "## SMART_DISPATCH - Command: " + command + '\n'
 
-                stdout_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
-                stdout_file.write("# " + command + '\n')
+                stdout_file.write(log_datetime + log_command)
                 stdout_file.flush()
-                stderr_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
-                stderr_file.write("# " + command + '\n')
+                stderr_file.write(log_datetime + log_command)
                 stderr_file.flush()
 
                 error_code = subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)

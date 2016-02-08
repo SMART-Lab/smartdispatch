@@ -45,14 +45,21 @@ class TestSmartWorker(unittest.TestCase):
                 executed_command = self.commands[self.commands_uid.index(uid)]
 
                 # Since the command was run twice.
-                for _ in range(2):
+                for i in range(2):
                     # First line is the datetime of the executed command in comment.
                     line = logfile.readline().strip()
-                    assert_true(time.strftime("## %Y-%m-%d %H:%M:") in line)  # Don't check seconds.
+
+                    if i == 0:
+                        assert_true("Started" in line)
+                    else:
+                        assert_true("Resumed" in line)
+
+                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
 
                     # Second line is the executed command in comment.
                     line = logfile.readline().strip()
-                    assert_equal(line, "# " + executed_command)
+                    assert_true(executed_command in line)
 
                     # Next should be the command's output
                     line = logfile.readline().strip()
@@ -73,14 +80,21 @@ class TestSmartWorker(unittest.TestCase):
                 executed_command = self.commands[self.commands_uid.index(uid)]
 
                 # Since the command was run twice.
-                for _ in range(2):
+                for i in range(2):
                     # First line is the datetime of the executed command in comment.
                     line = logfile.readline().strip()
-                    assert_true(time.strftime("## %Y-%m-%d %H:%M:") in line)  # Don't check seconds.
+
+                    if i == 0:
+                        assert_true("Started" in line)
+                    else:
+                        assert_true("Resumed" in line)
+
+                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
 
                     # Second line is the executed command in comment.
                     line = logfile.readline().strip()
-                    assert_equal(line, "# " + executed_command)
+                    assert_true(executed_command in line)
 
                     # Empty line
                     assert_equal(logfile.readline().strip(), "")
