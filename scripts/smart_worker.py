@@ -45,8 +45,17 @@ def main():
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 
+        stdout_already_exists = os.path.isfile(stdout_filename)
+        stderr_already_exists = os.path.isfile(stderr_filename)
+
         with open(stdout_filename, 'a') as stdout_file:
             with open(stderr_filename, 'a') as stderr_file:
+                if stdout_already_exists:
+                    stdout_file.write('\n')
+
+                if stderr_already_exists:
+                    stderr_file.write('\n')
+
                 stdout_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
                 stdout_file.write("# " + command + '\n')
                 stdout_file.flush()
