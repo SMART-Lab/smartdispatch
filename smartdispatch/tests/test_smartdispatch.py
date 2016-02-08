@@ -1,8 +1,15 @@
-import smartdispatch
+import os
+import re
+import shutil
+import time as t
+from os.path import join as pjoin
 from StringIO import StringIO
 
+import tempfile
 from nose.tools import assert_true, assert_equal
 from numpy.testing import assert_array_equal
+
+import smartdispatch
 from smartdispatch import utils
 
 
@@ -137,3 +144,37 @@ def test_get_available_queues():
 
     queues_infos = smartdispatch.get_available_queues(cluster_name="mammouth")
     assert_true(len(queues_infos) > 0)
+
+
+def test_log_command_line():
+    temp_dir = tempfile.mkdtemp()
+    command_line_log_file = pjoin(temp_dir, "command_line.log")
+
+    command_1 = "echo 1 2 3"
+    smartdispatch.log_command_line(temp_dir, command_1)
+    assert_true(os.path.isfile(command_line_log_file))
+
+    lines = open(command_line_log_file).read().strip().split("\n")
+    assert_equal(len(lines), 2)  # Datetime, the command line.
+    assert_true(t.strftime("## %Y-%m-%d %H:%M:") in lines[0])  # Don't check second.
+    assert_equal(lines[1], command_1)
+
+    command_2 = "echo \"bob\""  # With quotes.
+    smartdispatch.log_command_line(temp_dir, command_2)
+    assert_true(os.path.isfile(command_line_log_file))
+
+    lines = open(command_line_log_file).read().strip().split("\n")
+    assert_equal(len(lines), 5)
+    assert_true(t.strftime("## %Y-%m-%d %H:%M:") in lines[3])  # Don't check second.
+    assert_equal(lines[4], command_2.replace('"', r'\"'))
+
+    command_3 = "echo [asd]"  # With square brackets.
+    smartdispatch.log_command_line(temp_dir, command_3)
+    assert_true(os.path.isfile(command_line_log_file))
+
+    lines = open(command_line_log_file).read().strip().split("\n")
+    assert_equal(len(lines), 8)
+    assert_true(t.strftime("## %Y-%m-%d %H:%M:") in lines[6])  # Don't check second.
+    assert_equal(lines[7], re.sub(r'(\[)([^\[\]]*\\ [^\[\]]*)(\])', r'"\1\2\3"', command_3))
+
+    shutil.rmtree(temp_dir)
