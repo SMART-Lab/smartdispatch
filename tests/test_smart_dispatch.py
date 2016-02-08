@@ -62,7 +62,6 @@ class TestSmartdispatcher(unittest.TestCase):
 
         # Test when batch_uid is a path instead of a jobname.
         # Setup
-        call(self.launch_command, shell=True)
         batch_uid = os.path.join(self.logs_dir, os.listdir(self.logs_dir)[0])
 
         # Simulate that some commands are in the running state.
