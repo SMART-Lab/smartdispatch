@@ -60,12 +60,12 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(len(open(running_commands_file).readlines()), 0)
         assert_equal(len(open(pending_commands_file).readlines()), len(commands))
 
-		# Test when batch_uid is a path instead of a jobname.
-		# Setup
+        # Test when batch_uid is a path instead of a jobname.
+        # Setup
         call(self.launch_command, shell=True)
         batch_uid = os.path.join(self.logs_dir, os.listdir(self.logs_dir)[0])
 
-		# Simulate that some commands are in the running state.
+        # Simulate that some commands are in the running state.
         path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
         pending_commands_file = pjoin(path_job_commands, "commands.txt")
         running_commands_file = pjoin(path_job_commands, "running_commands.txt")
@@ -84,7 +84,6 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(len(os.listdir(self.logs_dir)), 1)
         assert_equal(len(open(running_commands_file).readlines()), 0)
         assert_equal(len(open(pending_commands_file).readlines()), len(commands))
-
 
     def test_main_resume_only_pending(self):
         # SetUp

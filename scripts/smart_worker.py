@@ -45,22 +45,13 @@ def main():
         stdout_filename = os.path.join(args.logs_dir, uid + ".out")
         stderr_filename = os.path.join(args.logs_dir, uid + ".err")
 
-        stdout_already_exists = os.path.isfile(stdout_filename)
-        stderr_already_exists = os.path.isfile(stderr_filename)
-
         with open(stdout_filename, 'a') as stdout_file:
             with open(stderr_filename, 'a') as stderr_file:
-                if stdout_already_exists:
-                    stdout_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
-                else:
-                    stdout_file.write("# " + command + '\n')
-
-                if stderr_already_exists:
-                    stderr_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
-                else:
-                    stderr_file.write("# " + command + '\n')
-
+                stdout_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+                stdout_file.write("# " + command + '\n')
                 stdout_file.flush()
+                stderr_file.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+                stderr_file.write("# " + command + '\n')
                 stderr_file.flush()
 
                 error_code = subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
