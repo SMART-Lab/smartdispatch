@@ -97,7 +97,7 @@ def main():
 
     # If no pool size is specified the number of commands is taken
     if args.pool is None:
-        args.pool = command_manager.get_nb_commands_to_run(command_line)
+        args.pool = command_manager.get_nb_commands_to_run()
 
     # Generating all the worker commands
     COMMAND_STRING = 'cd "{cwd}"; smart_worker.py "{commands_file}" "{log_folder}" '\

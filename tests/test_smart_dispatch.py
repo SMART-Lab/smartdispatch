@@ -15,9 +15,16 @@ class TestSmartdispatcher(unittest.TestCase):
         self.testing_dir = tempfile.mkdtemp()
         self.logs_dir = os.path.join(self.testing_dir, 'SMART_DISPATCH_LOGS')
 
-        base_command = 'smart_dispatch.py --pool 10 -C 42 -q test -t 5:00 -x {0}'
-        self.launch_command = base_command.format('launch echo "[1 2 3 4]" "[6 7 8]" "[9 0]"')
-        self.resume_command = base_command.format('resume {0}')
+        self.commands = 'echo "[1 2 3 4]" "[6 7 8]" "[9 0]"'
+        self.nb_commands = 4*3*2
+
+        smart_dispatch_command = 'smart_dispatch.py -C 1 -q test -t 5:00 -x {0}'
+        self.launch_command = smart_dispatch_command.format('launch ' + self.commands)
+        self.resume_command = smart_dispatch_command.format('resume {0}')
+
+        smart_dispatch_command_with_pool = 'smart_dispatch.py --pool 10 -C 1 -q test -t 5:00 -x {0}'
+        self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.commands)
+        self.nb_workers = 10
 
         self._cwd = os.getcwd()
         os.chdir(self.testing_dir)
@@ -34,6 +41,23 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(exit_status, 0)
         assert_true(os.path.isdir(self.logs_dir))
         assert_equal(len(os.listdir(self.logs_dir)), 1)
+
+        batch_uid = os.listdir(self.logs_dir)[0]
+        path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
+        assert_equal(len(os.listdir(path_job_commands)), self.nb_commands + 1)
+
+    def test_main_launch_with_pool_of_workers(self):
+        # Actual test
+        exit_status = call(self.launch_command_with_pool, shell=True)
+
+        # Test validation
+        assert_equal(exit_status, 0)
+        assert_true(os.path.isdir(self.logs_dir))
+        assert_equal(len(os.listdir(self.logs_dir)), 1)
+
+        batch_uid = os.listdir(self.logs_dir)[0]
+        path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
+        assert_equal(len(os.listdir(path_job_commands)), self.nb_workers + 1)
 
     def test_main_resume(self):
         # Setup
