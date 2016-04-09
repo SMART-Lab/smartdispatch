@@ -8,7 +8,7 @@ from os.path import join as pjoin
 
 import smartdispatch
 from smartdispatch import utils
-from .filelock import open_with_lock
+from smartdispatch.filelock import open_with_lock
 from smartdispatch.argument_template import argument_templates
 
 UID_TAG = "{UID}"
