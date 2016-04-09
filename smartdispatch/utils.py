@@ -6,10 +6,6 @@ import json
 from distutils.util import strtobool
 from subprocess import Popen, PIPE
 
-# Constants needed for `open_with_lock` function
-MAX_ATTEMPTS = 1000
-TIME_BETWEEN_ATTEMPTS = 1  # In seconds
-
 
 def print_boxed(string):
     splitted_string = string.split('\n')

@@ -5,7 +5,7 @@ import time
 import shutil
 
 from smartdispatch import utils
-from smartdispatch import filelock
+from smartdispatch.filelock import open_with_lock
 from smartdispatch.command_manager import CommandManager
 
 from subprocess import Popen, call, PIPE
@@ -107,7 +107,7 @@ class TestSmartWorker(unittest.TestCase):
         command = ["smart_worker.py", self.command_manager._commands_filename, self.logs_dir]
 
         # Lock the commands file before running 'smart_worker.py'
-        with filelock.open_with_lock(self.command_manager._commands_filename, 'r+'):
+        with open_with_lock(self.command_manager._commands_filename, 'r+'):
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             time.sleep(1)
 
