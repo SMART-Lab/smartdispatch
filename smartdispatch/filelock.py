@@ -1,15 +1,10 @@
 import os
 import time
 import fcntl
+import psutil
 import logging
 
 from contextlib import contextmanager
-
-have_psutil = True
-try:
-    import psutil
-except ImportError:
-    have_psutil = False
 
 # Constants needed for `open_with_dirlock` function.
 MAX_ATTEMPTS = 1000  # This would correspond to be blocked for ~15min.
@@ -74,8 +69,7 @@ def open_with_dirlock(*args, **kwargs):
 # Determine if we can rely on the fcntl module for locking files on the cluster.
 # Otherwise, fallback on using the directory creation atomicity as a locking mechanism.
 open_with_lock = open_with_dirlock
-if have_psutil:
-    fs = get_fs('.')
-    if fs.fstype == "lustre" and "localflock" not in fs.opts:
-        print("Cluster supports flock.")
-        open_with_lock = open_with_flock
+fs = get_fs('.')
+if fs.fstype == "lustre" and "localflock" not in fs.opts:
+    print("Cluster supports flock.")
+    open_with_lock = open_with_flock

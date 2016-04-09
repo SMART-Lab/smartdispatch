@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE
 from nose.tools import assert_equal, assert_true
 
 from smartdispatch.filelock import open_with_lock, open_with_dirlock, open_with_flock
-from smartdispatch.filelock import find_mount_point, get_fs, have_psutil
+from smartdispatch.filelock import find_mount_point, get_fs
 
 
 def _test_open_with_lock(lock_func):
@@ -62,6 +62,5 @@ def test_find_mount_point():
 
 
 def test_get_fs():
-    if have_psutil:
-        fs = get_fs('/')
-        assert_true(fs is not None)
+    fs = get_fs('/')
+    assert_true(fs is not None)
