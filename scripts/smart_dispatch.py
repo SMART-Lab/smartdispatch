@@ -28,14 +28,10 @@ LAUNCHER = utils.get_launcher(CLUSTER_NAME)
 
 
 def main():
-    args = parse_arguments()
-
     # Necessary if we want 'logging.info' to appear in stderr.
     logging.root.setLevel(logging.INFO)
 
-    if args.verbose:
-        logging.root.setLevel(logging.DEBUG)
-
+    args = parse_arguments()
     path_smartdispatch_logs = pjoin(os.getcwd(), LOGS_FOLDERNAME)
 
     # Check if RESUME or LAUNCH mode
