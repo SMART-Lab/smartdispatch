@@ -152,8 +152,6 @@ def parse_arguments():
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
 
     parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands. Default: Nb commands")
-
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode.')
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")
