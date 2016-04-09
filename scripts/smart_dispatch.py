@@ -28,10 +28,14 @@ LAUNCHER = utils.get_launcher(CLUSTER_NAME)
 
 
 def main():
+    args = parse_arguments()
+
     # Necessary if we want 'logging.info' to appear in stderr.
     logging.root.setLevel(logging.INFO)
 
-    args = parse_arguments()
+    if args.verbose:
+        logging.root.setLevel(logging.DEBUG)
+
     path_smartdispatch_logs = pjoin(os.getcwd(), LOGS_FOLDERNAME)
 
     # Check if RESUME or LAUNCH mode
@@ -152,6 +156,8 @@ def parse_arguments():
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
 
     parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands. Default: Nb commands")
+
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode.')
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")

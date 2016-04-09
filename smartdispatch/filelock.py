@@ -77,4 +77,5 @@ open_with_lock = open_with_dirlock
 if have_psutil:
     fs = get_fs('.')
     if fs.fstype == "lustre" and "localflock" not in fs.opts:
+        logging.debug("Cluster supports flock.")
         open_with_lock = open_with_flock
