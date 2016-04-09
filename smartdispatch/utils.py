@@ -1,14 +1,10 @@
-import os
 import re
-import time
-import logging
 import hashlib
 import unicodedata
 import json
 
 from distutils.util import strtobool
 from subprocess import Popen, PIPE
-from contextlib import contextmanager
 
 # Constants needed for `open_with_lock` function
 MAX_ATTEMPTS = 1000
@@ -84,28 +80,6 @@ def decode_escaped_characters(text):
         return match.group()[2:].decode("hex")
 
     return re.sub(r"\\x..", unhexify, text)
-
-
-@contextmanager
-def open_with_lock(*args, **kwargs):
-    """ Context manager for opening file with an exclusive lock. """
-    dirname = os.path.dirname(args[0])
-    filename = os.path.basename(args[0])
-    lockfile = os.path.join(dirname, "." + filename)
-
-    no_attempt = 0
-    while no_attempt < MAX_ATTEMPTS:
-        try:
-            os.mkdir(lockfile)  # Atomic operation
-            f = open(*args, **kwargs)
-            yield f
-            f.close()
-            os.rmdir(lockfile)
-            break
-        except OSError:
-            logging.info("Can't immediately write-lock the file ({0}), retrying in {1} sec. ...".format(filename, TIME_BETWEEN_ATTEMPTS))
-            time.sleep(TIME_BETWEEN_ATTEMPTS)
-            no_attempt += 1
 
 
 def save_dict_to_json_file(path, dictionary):

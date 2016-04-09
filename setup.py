@@ -12,6 +12,6 @@ setup(
     license='LICENSE.txt',
     description='A batch job launcher for the Mammouth supercomputer.',
     long_description=open('README.txt').read(),
-    install_requires=[],
+    install_requires=['psutil'],
     package_data={'smartdispatch': ['config/*.json']}
 )
