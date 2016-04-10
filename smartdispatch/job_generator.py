@@ -100,6 +100,20 @@ class JobGenerator(object):
 
         return pbs_list
 
+    def generate_pbs_with_account_name_from_file(self, rapid_filename):
+        pbs_list = JobGenerator.generate_pbs(self)
+
+        if not os.path.isfile(rapid_filename):
+            raise ValueError("Account name file {} does not exist. Please, provide your account name!".format(rapid_filename))
+
+        with open(rapid_filename, 'r') as rapid_file:
+            account_name = rapid_file.read().strip()
+
+        for pbs in pbs_list:
+            pbs.add_options(A=account_name)
+
+        return pbs_list
+
 
 class MammouthJobGenerator(JobGenerator):
 
@@ -136,15 +150,10 @@ class GuilliminJobGenerator(JobGenerator):
 class HeliosJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = self.generate_pbs_with_account_name_from_env('RAP')
+        pbs_list = self.generate_pbs_with_account_name_from_file("{}/.default_rap".format(os.environ['HOME']))
 
         for pbs in pbs_list:
-            # Remove forbidden ppn option. Default is 5 cores per 2 gpu.
+            # Remove forbidden ppn option. Default is 2 cores per gpu.
             pbs.resources['nodes'] = re.sub(":ppn=[0-9]+", "", pbs.resources['nodes'])
-
-            # Nb of GPUs has to be a multiple of 2
-            nb_gpus = int(re.findall("gpus=([0-9]+)", pbs.resources['nodes'])[0])
-            if nb_gpus % 2 != 0:
-                pbs.resources['nodes'] = re.sub("gpus=[0-9]+", "gpus={0}".format(nb_gpus + 1), pbs.resources['nodes'])
 
         return pbs_list
