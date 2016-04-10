@@ -22,7 +22,7 @@ class TestJobGenerator(unittest.TestCase):
         self.mem_per_node = 32
         self.modules = ["cuda", "python"]
 
-        self.queue = Queue(self.name, self.cluster_name, self.walltime, self.cores, 0, self.modules)
+        self.queue = Queue(self.name, self.cluster_name, self.walltime, self.cores, 0, self.mem_per_node, self.modules)
         self.queue_gpu = Queue(self.name, self.cluster_name, self.walltime, self.cores, self.gpus, self.mem_per_node, self.modules)
 
     def tearDown(self):
@@ -56,6 +56,10 @@ class TestJobGenerator(unittest.TestCase):
 
         # Since queue has no gpus it should not be specified in PBS resource `nodes`
         assert_true('gpus' not in pbs_list[0].resources['nodes'])
+
+        # Test modules to load
+        # Check if needed modules for this queue are included in the PBS file
+        assert_equal(pbs_list[0].modules, self.modules)
 
         # Test nb_gpus_per_command argument
         # Should needs two PBS file
