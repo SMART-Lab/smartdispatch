@@ -135,9 +135,9 @@ class TestHeliosQueue(unittest.TestCase):
         self.queue = Queue("gpu_8", "helios")
 
         self._home_backup = os.environ['HOME']
-        os.environ['HOME'] = os.path.abspath('.')
+        os.environ['HOME'] = tempfile.mkdtemp()
 
-        self.rap_filename = "{}/.default_rap".format(os.environ['HOME'])
+        self.rap_filename = os.path.join(os.environ['HOME'], ".default_rap")
         if os.path.isfile(self.rap_filename):
             raise Exception("Test fail: {} should not be there.".format(self.rap_filename))
         else:
@@ -148,8 +148,7 @@ class TestHeliosQueue(unittest.TestCase):
         self.job_generator = HeliosJobGenerator(self.queue, self.commands)
 
     def tearDown(self):
-        if os.path.isfile(self.rap_filename):
-            os.remove(self.rap_filename)
+        shutil.rmtree(os.environ['HOME'])
         os.environ['HOME'] = self._home_backup
 
     def test_generate_pbs_invalid_group(self):

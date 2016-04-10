@@ -10,8 +10,8 @@ from numpy.testing import assert_array_equal
 class PrintBoxedTests(unittest.TestCase):
 
     def setUp(self):
-        self.empty = u""
-        self.text = u"This is weird test for a visual thing.\nWell maybe it's fine to test it's working."
+        self.empty = ''
+        self.text = "This is weird test for a visual thing.\nWell maybe it's fine to test it's working."
 
     def test_print_boxed(self):
         utils.print_boxed(self.text)

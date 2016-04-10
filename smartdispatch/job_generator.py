@@ -150,7 +150,7 @@ class GuilliminJobGenerator(JobGenerator):
 class HeliosJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = self.generate_pbs_with_account_name_from_file("{}/.default_rap".format(os.environ['HOME']))
+        pbs_list = self.generate_pbs_with_account_name_from_file(os.path.join(os.environ['HOME'], ".default_rap"))
 
         for pbs in pbs_list:
             # Remove forbidden ppn option. Default is 2 cores per gpu.
