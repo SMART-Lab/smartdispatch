@@ -18,11 +18,11 @@ class TestSmartdispatcher(unittest.TestCase):
         self.commands = 'echo "[1 2 3 4]" "[6 7 8]" "[9 0]"'
         self.nb_commands = 4*3*2
 
-        smart_dispatch_command = 'smart_dispatch.py -C 1 -q test -t 5:00 -x {0}'
+        smart_dispatch_command = 'smart-dispatch -C 1 -q test -t 5:00 -x {0}'
         self.launch_command = smart_dispatch_command.format('launch ' + self.commands)
         self.resume_command = smart_dispatch_command.format('resume {0}')
 
-        smart_dispatch_command_with_pool = 'smart_dispatch.py --pool 10 -C 1 -q test -t 5:00 -x {0}'
+        smart_dispatch_command_with_pool = 'smart-dispatch --pool 10 -C 1 -q test -t 5:00 -x {0}'
         self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.commands)
         self.nb_workers = 10
 
