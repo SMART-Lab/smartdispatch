@@ -11,6 +11,13 @@ from smartdispatch.filelock import find_mount_point, get_fs
 
 
 def _test_open_with_lock(lock_func):
+    """ Test a particular file lock.
+
+    Notes
+    -----
+    This test only checks if the locking mechanism works on a single
+    computer/compute node. There is *no* check for multi-node lock.
+    """
     temp_dir = tempfile.mkdtemp()
     filename = os.path.join(temp_dir, "testing.lck")
 

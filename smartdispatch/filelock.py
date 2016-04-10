@@ -66,10 +66,21 @@ def open_with_dirlock(*args, **kwargs):
             no_attempt += 1
 
 
+def _fs_support_globalflock(fs):
+    if fs.fstype == "lustre":
+        return ("flock" in fs.opts) and "localflock" not in fs.opts
+
+    elif fs.fstype == "gpfs":
+        return True
+
+    return False  # We don't know.
+
+
 # Determine if we can rely on the fcntl module for locking files on the cluster.
 # Otherwise, fallback on using the directory creation atomicity as a locking mechanism.
-open_with_lock = open_with_dirlock
 fs = get_fs('.')
-if fs.fstype == "lustre" and "localflock" not in fs.opts:
-    print("Cluster supports flock.")
+if _fs_support_globalflock(fs):
     open_with_lock = open_with_flock
+else:
+    logging.warn("Cluster does not support flock!")
+    open_with_lock = open_with_dirlock
