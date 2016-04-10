@@ -16,6 +16,7 @@ from smartdispatch.queue import Queue
 from smartdispatch.job_generator import job_generator_factory
 from smartdispatch import get_available_queues
 from smartdispatch import utils
+from smartdispatch.filelock import open_with_lock
 
 import logging
 import smartdispatch
@@ -126,7 +127,7 @@ def main():
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
             jobs_id += [qsub_output.strip()]
 
-        with utils.open_with_lock(pjoin(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
+        with open_with_lock(pjoin(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
             jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
             jobs_id_file.writelines("\n".join(jobs_id) + "\n")
         print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))

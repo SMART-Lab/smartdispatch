@@ -8,6 +8,7 @@ from os.path import join as pjoin
 
 import smartdispatch
 from smartdispatch import utils
+from smartdispatch.filelock import open_with_lock
 from smartdispatch.argument_template import argument_templates
 
 UID_TAG = "{UID}"
@@ -153,7 +154,7 @@ def log_command_line(path_job, command_line):
     we can paste the command line as-is in the terminal. This means that the quotes
     symbole " and the square brackets will be escaped.
     """
-    with utils.open_with_lock(pjoin(path_job, "command_line.log"), 'a') as command_line_log:
+    with open_with_lock(pjoin(path_job, "command_line.log"), 'a') as command_line_log:
         command_line_log.write(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
         command_line = command_line.replace('"', r'\"')  # Make sure we can paste the command line as-is
         command_line = re.sub(r'(\[)([^\[\]]*\\ [^\[\]]*)(\])', r'"\1\2\3"', command_line)  # Make sure we can paste the command line as-is

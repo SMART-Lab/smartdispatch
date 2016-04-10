@@ -1,13 +1,10 @@
 import re
-import fcntl
-import logging
 import hashlib
 import unicodedata
 import json
 
 from distutils.util import strtobool
 from subprocess import Popen, PIPE
-from contextlib import contextmanager
 
 
 def print_boxed(string):
@@ -79,20 +76,6 @@ def decode_escaped_characters(text):
         return match.group()[2:].decode("hex")
 
     return re.sub(r"\\x..", unhexify, text)
-
-
-@contextmanager
-def open_with_lock(*args, **kwargs):
-    """ Context manager for opening file with an exclusive lock. """
-    f = open(*args, **kwargs)
-    try:
-        fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        logging.info("Can't immediately write-lock the file ({0}), blocking ...".format(f.name))
-        fcntl.lockf(f, fcntl.LOCK_EX)
-    yield f
-    fcntl.lockf(f, fcntl.LOCK_UN)
-    f.close()
 
 
 def save_dict_to_json_file(path, dictionary):
