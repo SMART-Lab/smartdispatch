@@ -82,5 +82,5 @@ fs = get_fs('.')
 if _fs_support_globalflock(fs):
     open_with_lock = open_with_flock
 else:
-    logging.warn("Cluster does not support flock!")
+    logging.warn("Cluster does not support flock! Falling back to folder lock.")
     open_with_lock = open_with_dirlock
