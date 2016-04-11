@@ -134,28 +134,32 @@ class TestHeliosQueue(unittest.TestCase):
         self.commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
         self.queue = Queue("gpu_8", "helios")
 
-        self.env_val = 'RAP'
+        self._home_backup = os.environ['HOME']
+        os.environ['HOME'] = tempfile.mkdtemp()
 
-        self.bak_env_home_group = os.environ.get(self.env_val)
-        if self.bak_env_home_group is not None:
-            del os.environ[self.env_val]
-        os.environ[self.env_val] = "/rap/group/"
+        self.rap_filename = os.path.join(os.environ['HOME'], ".default_rap")
+        if os.path.isfile(self.rap_filename):
+            raise Exception("Test fail: {} should not be there.".format(self.rap_filename))
+        else:
+            self.rapid = 'asd-123-ab'
+            with open(self.rap_filename, 'w+') as rap_file:
+                rap_file.write(self.rapid)
 
         self.job_generator = HeliosJobGenerator(self.queue, self.commands)
 
     def tearDown(self):
-        if self.bak_env_home_group is not None:
-            os.environ[self.env_val] = self.bak_env_home_group
+        shutil.rmtree(os.environ['HOME'])
+        os.environ['HOME'] = self._home_backup
 
     def test_generate_pbs_invalid_group(self):
-        del os.environ[self.env_val]
+        os.remove(self.rap_filename)
 
         assert_raises(ValueError, self.job_generator.generate_pbs)
 
     def test_generate_pbs_valid_group(self):
         pbs = self.job_generator.generate_pbs()[0]
 
-        assert_equal(pbs.options['-A'], "group")
+        assert_equal(pbs.options['-A'], self.rapid)
 
     def test_generate_pbs_ppn_is_absent(self):
         assert_false("ppn=" in self.job_generator.generate_pbs()[0].__str__())
@@ -167,7 +171,7 @@ class TestHeliosQueue(unittest.TestCase):
         commands = ["echo 1", "echo 2", "echo 3", "echo 4", "echo 5"]
         job_generator = HeliosJobGenerator(self.queue, commands)
 
-        assert_true("gpus=6" in job_generator.generate_pbs()[0].__str__())
+        assert_true("gpus=5" in job_generator.generate_pbs()[0].__str__())
 
 
 class TestHadesQueue(unittest.TestCase):

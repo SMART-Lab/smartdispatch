@@ -88,9 +88,7 @@ class JobGenerator(object):
 
         return pbs_filenames
 
-    def generate_pbs_with_account_name_from_env(self, environment_variable_name):
-        pbs_list = JobGenerator.generate_pbs(self)
-
+    def specify_account_name_from_env(self, pbs_list, environment_variable_name):
         if environment_variable_name not in os.environ:
             raise ValueError("Undefined environment variable: ${}. Please, provide your account name!".format(environment_variable_name))
 
@@ -100,11 +98,23 @@ class JobGenerator(object):
 
         return pbs_list
 
+    def specify_account_name_from_file(self, pbs_list, rapid_filename):
+        if not os.path.isfile(rapid_filename):
+            raise ValueError("Account name file {} does not exist. Please, provide your account name!".format(rapid_filename))
+
+        with open(rapid_filename, 'r') as rapid_file:
+            account_name = rapid_file.read().strip()
+
+        for pbs in pbs_list:
+            pbs.add_options(A=account_name)
+
+        return pbs_list
+
 
 class MammouthJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = JobGenerator.generate_pbs(self)
+        pbs_list = super(MammouthJobGenerator, self).generate_pbs()
 
         if self.queue.name.endswith("@mp2"):
             for pbs in pbs_list:
@@ -116,7 +126,7 @@ class MammouthJobGenerator(JobGenerator):
 class HadesJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = JobGenerator.generate_pbs(self)
+        pbs_list = super(HadesJobGenerator, self).generate_pbs()
 
         for pbs in pbs_list:
             gpus = re.match(".*gpus=([0-9]+)", pbs.resources['nodes']).group(1)
@@ -129,22 +139,19 @@ class HadesJobGenerator(JobGenerator):
 class GuilliminJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        return self.generate_pbs_with_account_name_from_env('HOME_GROUP')
+        pbs_list = super(GuilliminJobGenerator, self).generate_pbs()
+        return self.specify_account_name_from_env(pbs_list, 'HOME_GROUP')
 
 
 # https://wiki.calculquebec.ca/w/Ex%C3%A9cuter_une_t%C3%A2che#tab=tab6
 class HeliosJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = self.generate_pbs_with_account_name_from_env('RAP')
+        pbs_list = super(HeliosJobGenerator, self).generate_pbs()
+        pbs_list = self.specify_account_name_from_file(pbs_list, os.path.join(os.environ['HOME'], ".default_rap"))
 
         for pbs in pbs_list:
-            # Remove forbidden ppn option. Default is 5 cores per 2 gpu.
+            # Remove forbidden ppn option. Default is 2 cores per gpu.
             pbs.resources['nodes'] = re.sub(":ppn=[0-9]+", "", pbs.resources['nodes'])
-
-            # Nb of GPUs has to be a multiple of 2
-            nb_gpus = int(re.findall("gpus=([0-9]+)", pbs.resources['nodes'])[0])
-            if nb_gpus % 2 != 0:
-                pbs.resources['nodes'] = re.sub("gpus=[0-9]+", "gpus={0}".format(nb_gpus + 1), pbs.resources['nodes'])
 
         return pbs_list

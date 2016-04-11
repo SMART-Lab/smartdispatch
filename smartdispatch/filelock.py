@@ -8,7 +8,7 @@ from contextlib import contextmanager
 
 # Constants needed for `open_with_dirlock` function.
 MAX_ATTEMPTS = 1000  # This would correspond to be blocked for ~15min.
-TIME_BETWEEN_ATTEMPTS = 1  # In seconds
+TIME_BETWEEN_ATTEMPTS = 2  # In seconds
 
 
 def find_mount_point(path='.'):
