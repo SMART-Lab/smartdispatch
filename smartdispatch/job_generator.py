@@ -88,9 +88,7 @@ class JobGenerator(object):
 
         return pbs_filenames
 
-    def generate_pbs_with_account_name_from_env(self, environment_variable_name):
-        pbs_list = JobGenerator.generate_pbs(self)
-
+    def specify_account_name_from_env(self, pbs_list, environment_variable_name):
         if environment_variable_name not in os.environ:
             raise ValueError("Undefined environment variable: ${}. Please, provide your account name!".format(environment_variable_name))
 
@@ -100,9 +98,7 @@ class JobGenerator(object):
 
         return pbs_list
 
-    def generate_pbs_with_account_name_from_file(self, rapid_filename):
-        pbs_list = JobGenerator.generate_pbs(self)
-
+    def specify_account_name_from_file(self, pbs_list, rapid_filename):
         if not os.path.isfile(rapid_filename):
             raise ValueError("Account name file {} does not exist. Please, provide your account name!".format(rapid_filename))
 
@@ -143,14 +139,16 @@ class HadesJobGenerator(JobGenerator):
 class GuilliminJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        return self.generate_pbs_with_account_name_from_env('HOME_GROUP')
+        pbs_list = super(GuilliminJobGenerator, self).generate_pbs()
+        return self.specify_account_name_from_env(pbs_list, 'HOME_GROUP')
 
 
 # https://wiki.calculquebec.ca/w/Ex%C3%A9cuter_une_t%C3%A2che#tab=tab6
 class HeliosJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = self.generate_pbs_with_account_name_from_file(os.path.join(os.environ['HOME'], ".default_rap"))
+        pbs_list = super(HeliosJobGenerator, self).generate_pbs()
+        pbs_list = self.specify_account_name_from_file(pbs_list, os.path.join(os.environ['HOME'], ".default_rap"))
 
         for pbs in pbs_list:
             # Remove forbidden ppn option. Default is 2 cores per gpu.
