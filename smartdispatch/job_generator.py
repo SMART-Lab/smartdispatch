@@ -118,7 +118,7 @@ class JobGenerator(object):
 class MammouthJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = JobGenerator.generate_pbs(self)
+        pbs_list = super(MammouthJobGenerator, self).generate_pbs(self)
 
         if self.queue.name.endswith("@mp2"):
             for pbs in pbs_list:
@@ -130,7 +130,7 @@ class MammouthJobGenerator(JobGenerator):
 class HadesJobGenerator(JobGenerator):
 
     def generate_pbs(self):
-        pbs_list = JobGenerator.generate_pbs(self)
+        pbs_list = super(HadesJobGenerator, self).generate_pbs(self)
 
         for pbs in pbs_list:
             gpus = re.match(".*gpus=([0-9]+)", pbs.resources['nodes']).group(1)
