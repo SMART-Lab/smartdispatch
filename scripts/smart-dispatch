@@ -101,7 +101,7 @@ def main():
 
     # Generating all the worker commands
     worker_script = pjoin(os.path.dirname(smartdispatch.__file__), 'workers', 'base_worker.py')
-    COMMAND_STRING = 'cd "{cwd}"; {worker_script} "{commands_file}" "{log_folder}" '\
+    COMMAND_STRING = 'cd "{cwd}"; python2 {worker_script} "{commands_file}" "{log_folder}" '\
                      '1>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.o" '\
                      '2>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.e" '
     COMMAND_STRING = COMMAND_STRING.format(cwd=os.getcwd(), worker_script=worker_script, commands_file=command_manager._commands_filename, log_folder=path_job_logs)

@@ -32,7 +32,7 @@ class TestSmartWorker(unittest.TestCase):
         shutil.rmtree(self.logs_dir)
 
     def test_main(self):
-        command = [self.base_worker_script, self.command_manager._commands_filename, self.logs_dir]
+        command = ['python2', self.base_worker_script, self.command_manager._commands_filename, self.logs_dir]
         assert_equal(call(command), 0)
         # Simulate a resume, i.e. re-run the command, the output/error should be concatenated.
         self.command_manager.set_commands_to_run(self.commands)
@@ -106,7 +106,7 @@ class TestSmartWorker(unittest.TestCase):
                 assert_equal("", logfile.read())
 
     def test_lock(self):
-        command = [self.base_worker_script, self.command_manager._commands_filename, self.logs_dir]
+        command = ['python2', self.base_worker_script, self.command_manager._commands_filename, self.logs_dir]
 
         # Lock the commands file before running 'base_worker.py'
         with open_with_lock(self.command_manager._commands_filename, 'r+'):
