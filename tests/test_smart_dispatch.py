@@ -15,15 +15,19 @@ class TestSmartdispatcher(unittest.TestCase):
         self.testing_dir = tempfile.mkdtemp()
         self.logs_dir = os.path.join(self.testing_dir, 'SMART_DISPATCH_LOGS')
 
-        self.commands = 'echo "[1 2 3 4]" "[6 7 8]" "[9 0]"'
-        self.nb_commands = 4*3*2
+        self.folded_commands = 'echo "[1 2 3 4]" "[6 7 8]" "[9 0]"'
+        self.commands = ["echo 1 6 9", "echo 1 6 0", "echo 1 7 9", "echo 1 7 0", "echo 1 8 9", "echo 1 8 0",
+                         "echo 2 6 9", "echo 2 6 0", "echo 2 7 9", "echo 2 7 0", "echo 2 8 9", "echo 2 8 0",
+                         "echo 3 6 9", "echo 3 6 0", "echo 3 7 9", "echo 3 7 0", "echo 3 8 9", "echo 3 8 0",
+                         "echo 4 6 9", "echo 4 6 0", "echo 4 7 9", "echo 4 7 0", "echo 4 8 9", "echo 4 8 0"]
+        self.nb_commands = len(self.commands)
 
-        smart_dispatch_command = 'smart-dispatch -C 1 -q test -t 5:00 -x {0}'
-        self.launch_command = smart_dispatch_command.format('launch ' + self.commands)
-        self.resume_command = smart_dispatch_command.format('resume {0}')
+        self.smart_dispatch_command = 'smart-dispatch -C 1 -q test -t 5:00 -x'
+        self.launch_command = self.smart_dispatch_command + " launch " + self.folded_commands
+        self.resume_command = self.smart_dispatch_command + " resume {0}"
 
         smart_dispatch_command_with_pool = 'smart-dispatch --pool 10 -C 1 -q test -t 5:00 -x {0}'
-        self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.commands)
+        self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.folded_commands)
         self.nb_workers = 10
 
         self._cwd = os.getcwd()
@@ -45,6 +49,24 @@ class TestSmartdispatcher(unittest.TestCase):
         batch_uid = os.listdir(self.logs_dir)[0]
         path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
         assert_equal(len(os.listdir(path_job_commands)), self.nb_commands + 1)
+
+    def test_launch_using_commands_file(self):
+        # Actual test
+        commands_filename = "commands_to_run.txt"
+        open(commands_filename, 'w').write("\n".join(self.commands))
+
+        launch_command = self.smart_dispatch_command + " -f {0} launch".format(commands_filename)
+        exit_status = call(launch_command, shell=True)
+
+        # Test validation
+        assert_equal(exit_status, 0)
+        assert_true(os.path.isdir(self.logs_dir))
+        assert_equal(len(os.listdir(self.logs_dir)), 1)
+
+        batch_uid = os.listdir(self.logs_dir)[0]
+        path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
+        assert_equal(len(os.listdir(path_job_commands)), self.nb_commands + 1)
+        assert_equal(open(pjoin(path_job_commands, 'commands.txt')).read(), "\n".join(self.commands) + "\n")
 
     def test_main_launch_with_pool_of_workers(self):
         # Actual test
