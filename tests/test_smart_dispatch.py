@@ -23,8 +23,8 @@ class TestSmartdispatcher(unittest.TestCase):
         self.nb_commands = len(self.commands)
 
         self.smart_dispatch_command = 'smart-dispatch -C 1 -q test -t 5:00 -x'
-        self.launch_command = self.smart_dispatch_command + " launch " + self.folded_commands
-        self.resume_command = self.smart_dispatch_command + " resume {0}"
+        self.launch_command = "{0} launch {1}".format(self.smart_dispatch_command, self.folded_commands)
+        self.resume_command = "{0} resume {{0}}".format(self.smart_dispatch_command)
 
         smart_dispatch_command_with_pool = 'smart-dispatch --pool 10 -C 1 -q test -t 5:00 -x {0}'
         self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.folded_commands)
