@@ -5,7 +5,6 @@ import os
 import sys
 import argparse
 import time as t
-import numpy as np
 from os.path import join as pjoin
 from subprocess import check_output
 from textwrap import dedent
@@ -109,7 +108,7 @@ def main():
     commands = [COMMAND_STRING.format(ID=i) for i in range(args.pool)]
 
     # TODO: use args.memPerNode instead of args.memPerNode
-    queue = Queue(args.queueName, CLUSTER_NAME, args.walltime, args.coresPerNode, args.gpusPerNode, np.inf, args.modules)
+    queue = Queue(args.queueName, CLUSTER_NAME, args.walltime, args.coresPerNode, args.gpusPerNode, float('inf'), args.modules)
 
     command_params = {'nb_cores_per_command': args.coresPerCommand,
                       'nb_gpus_per_command': args.gpusPerCommand,

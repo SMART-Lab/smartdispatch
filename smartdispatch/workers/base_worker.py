@@ -47,9 +47,9 @@ def main():
 
         with open(stdout_filename, 'a') as stdout_file:
             with open(stderr_filename, 'a') as stderr_file:
-                log_datetime = t.strftime("## SMART_DISPATCH - Started on: %Y-%m-%d %H:%M:%S ##\n")
+                log_datetime = t.strftime("## SMART-DISPATCH - Started on: %Y-%m-%d %H:%M:%S ##\n")
                 if stdout_file.tell() > 0:  # Not the first line in the log file.
-                    log_datetime = t.strftime("\n## SMART_DISPATCH - Resumed on: %Y-%m-%d %H:%M:%S ##\n")
+                    log_datetime = t.strftime("\n## SMART-DISPATCH - Resumed on: %Y-%m-%d %H:%M:%S ##\n")
 
                 log_command = "## SMART_DISPATCH - Command: " + command + '\n'
 

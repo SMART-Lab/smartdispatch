@@ -57,7 +57,7 @@ class TestSmartWorker(unittest.TestCase):
                     else:
                         assert_true("Resumed" in line)
 
-                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(line.startswith("## SMART-DISPATCH"))
                     assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
 
                     # Second line is the executed command in comment.
@@ -92,7 +92,7 @@ class TestSmartWorker(unittest.TestCase):
                     else:
                         assert_true("Resumed" in line)
 
-                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(line.startswith("## SMART-DISPATCH"))
                     assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
 
                     # Second line is the executed command in comment.
