@@ -2,16 +2,17 @@
 from distutils.core import setup
 
 setup(
-    name='Smart-Dispatch',
-    version='1.2.1',
+    name='smart-dispatch',
+    version='1.3.0',
     author='Stanislas Lauly, Marc-Alexandre Côté, Mathieu Germain',
     author_email='smart-udes-dev@googlegroups.com',
-    packages=['smartdispatch'],
-    scripts=['scripts/smart_dispatch.py', 'scripts/smart_worker.py'],
+    packages=['smartdispatch',
+              'smartdispatch/workers'],
+    scripts=['scripts/smart-dispatch'],
     url='https://github.com/SMART-Lab/smartdispatch',
     license='LICENSE.txt',
-    description='A batch job launcher for the Mammouth supercomputer.',
-    long_description=open('README.txt').read(),
+    description='An easy to use job launcher for supercomputers with PBS compatible job manager.',
+    long_description=open('README.md').read(),
     install_requires=['psutil>=1'],
     package_data={'smartdispatch': ['config/*.json']}
 )

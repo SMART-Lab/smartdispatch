@@ -4,6 +4,7 @@ import tempfile
 import time
 import shutil
 
+import smartdispatch
 from smartdispatch import utils
 from smartdispatch.filelock import open_with_lock
 from smartdispatch.command_manager import CommandManager
@@ -16,6 +17,7 @@ from nose.tools import assert_true, assert_equal
 class TestSmartWorker(unittest.TestCase):
 
     def setUp(self):
+        self.base_worker_script = os.path.join(os.path.dirname(smartdispatch.__file__), 'workers', 'base_worker.py')
         self.commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
         self._commands_dir = tempfile.mkdtemp()
         self.logs_dir = tempfile.mkdtemp()
@@ -30,7 +32,7 @@ class TestSmartWorker(unittest.TestCase):
         shutil.rmtree(self.logs_dir)
 
     def test_main(self):
-        command = ["smart_worker.py", self.command_manager._commands_filename, self.logs_dir]
+        command = ['python2', self.base_worker_script, self.command_manager._commands_filename, self.logs_dir]
         assert_equal(call(command), 0)
         # Simulate a resume, i.e. re-run the command, the output/error should be concatenated.
         self.command_manager.set_commands_to_run(self.commands)
@@ -55,7 +57,7 @@ class TestSmartWorker(unittest.TestCase):
                     else:
                         assert_true("Resumed" in line)
 
-                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(line.startswith("## SMART-DISPATCH"))
                     assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
 
                     # Second line is the executed command in comment.
@@ -90,7 +92,7 @@ class TestSmartWorker(unittest.TestCase):
                     else:
                         assert_true("Resumed" in line)
 
-                    assert_true(line.startswith("## SMART_DISPATCH"))
+                    assert_true(line.startswith("## SMART-DISPATCH"))
                     assert_true(time.strftime("%Y-%m-%d %H:%M:") in line)  # Don't check seconds.
 
                     # Second line is the executed command in comment.
@@ -104,9 +106,9 @@ class TestSmartWorker(unittest.TestCase):
                 assert_equal("", logfile.read())
 
     def test_lock(self):
-        command = ["smart_worker.py", self.command_manager._commands_filename, self.logs_dir]
+        command = ['python2', self.base_worker_script, self.command_manager._commands_filename, self.logs_dir]
 
-        # Lock the commands file before running 'smart_worker.py'
+        # Lock the commands file before running 'base_worker.py'
         with open_with_lock(self.command_manager._commands_filename, 'r+'):
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             time.sleep(1)
