@@ -51,7 +51,7 @@ def main():
                 if stdout_file.tell() > 0:  # Not the first line in the log file.
                     log_datetime = t.strftime("\n## SMART-DISPATCH - Resumed on: %Y-%m-%d %H:%M:%S ##\n")
 
-                log_command = "## SMART_DISPATCH - Command: " + command + '\n'
+                log_command = "## SMART-DISPATCH - Command: " + command + '\n'
 
                 stdout_file.write(log_datetime + log_command)
                 stdout_file.flush()
