@@ -9,7 +9,7 @@ install:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - nosetests -v --with-coverage
+  - nosetests -v --with-coverage . smartdispatch/workers
 
 after_success:
   - coveralls
