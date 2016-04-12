@@ -11,8 +11,8 @@ setup(
     scripts=['scripts/smart-dispatch'],
     url='https://github.com/SMART-Lab/smartdispatch',
     license='LICENSE.txt',
-    description='A batch job launcher for computer clusters.',
-    long_description=open('README.txt').read(),
+    description='An easy to use job launcher for supercomputers with PBS compatible job manager.',
+    long_description=open('README.md').read(),
     install_requires=['psutil>=1', 'numpy>=1.7'],
     package_data={'smartdispatch': ['config/*.json']}
 )
