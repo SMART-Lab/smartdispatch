@@ -88,11 +88,6 @@ class TestJobGenerator(unittest.TestCase):
         # Check if needed modules for this queue are included in the PBS file
         assert_equal(pbs_list[0].modules, self.modules)
 
-    def test_generate_pbs_simple(self):
-        # Test creating a simple job generator
-        queue = {"queue_name": "qtest"}
-        job_generator = JobGenerator(queue, commands=[])
-
     def test_write_pbs_files(self):
         commands = ["echo 1", "echo 2", "echo 3", "echo 4"]
         command_params = {'nb_cores_per_command': self.cores}
