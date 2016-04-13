@@ -204,24 +204,39 @@ class TestHadesQueue(unittest.TestCase):
         assert_true("ppn=2" in self.pbs8[1].__str__())
 
 
+def _test_job_generator_factory(cluster_name, job_generator_class):
+    q = Queue("test", cluster_name, 1, 1, 1, 1)
+    job_generator = job_generator_factory(q, [], cluster_name=cluster_name)
+    assert_true(isinstance(job_generator, job_generator_class))
+    assert_true(type(job_generator) is job_generator_class)
+
+
 def test_job_generator_factory():
-    queue = {"queue_name": "qtest"}
-    commands = []
-    job_generator = job_generator_factory(queue, commands, cluster_name="guillimin")
-    assert_true(isinstance(job_generator, GuilliminJobGenerator))
+    clusters = [("guillimin", GuilliminJobGenerator),
+                ("mammouth", MammouthJobGenerator),
+                ("helios", HeliosJobGenerator),
+                ("hades", HadesJobGenerator),
+                (None, JobGenerator)]
 
-    job_generator = job_generator_factory(queue, commands, cluster_name="mammouth")
-    assert_true(isinstance(job_generator, MammouthJobGenerator))
+    for cluster_name, job_generator_class in clusters:
+        yield _test_job_generator_factory, cluster_name, job_generator_class
+        #print cluster_name, job_generator_class
 
-    job_generator = job_generator_factory(queue, commands, cluster_name="helios")
-    assert_true(isinstance(job_generator, HeliosJobGenerator))
+    # job_generator = job_generator_factory(queue, commands, cluster_name="guillimin")
+    # assert_true(isinstance(job_generator, GuilliminJobGenerator))
 
-    job_generator = job_generator_factory(queue, commands, cluster_name="hades")
-    assert_true(isinstance(job_generator, HadesJobGenerator))
+    # job_generator = job_generator_factory(queue, commands, cluster_name="mammouth")
+    # assert_true(isinstance(job_generator, MammouthJobGenerator))
 
-    job_generator = job_generator_factory(queue, commands, cluster_name=None)
-    assert_true(isinstance(job_generator, JobGenerator))
-    assert_true(not isinstance(job_generator, GuilliminJobGenerator))
-    assert_true(not isinstance(job_generator, MammouthJobGenerator))
-    assert_true(not isinstance(job_generator, HeliosJobGenerator))
-    assert_true(not isinstance(job_generator, HadesJobGenerator))
+    # job_generator = job_generator_factory(queue, commands, cluster_name="helios")
+    # assert_true(isinstance(job_generator, HeliosJobGenerator))
+
+    # job_generator = job_generator_factory(queue, commands, cluster_name="hades")
+    # assert_true(isinstance(job_generator, HadesJobGenerator))
+
+    # job_generator = job_generator_factory(queue, commands, cluster_name=None)
+    # assert_true(isinstance(job_generator, JobGenerator))
+    # assert_true(not isinstance(job_generator, GuilliminJobGenerator))
+    # assert_true(not isinstance(job_generator, MammouthJobGenerator))
+    # assert_true(not isinstance(job_generator, HeliosJobGenerator))
+    # assert_true(not isinstance(job_generator, HadesJobGenerator))
