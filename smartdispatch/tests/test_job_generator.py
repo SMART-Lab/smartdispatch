@@ -10,10 +10,9 @@ from smartdispatch.job_generator import GuilliminJobGenerator, MammouthJobGenera
 
 
 class TestJobGenerator(object):
+    pbs_flags = ['-lfeature=k80', '-lwalltime=42:42', '-lnodes=6:gpus=66', '-m', '-A123-asd-11', '-t10,20,30']
 
     def setUp(self):
-        self.pbs_flags = ['-lfeature=k80', '-lwalltime=42:42', '-lnodes=6:gpus=66', '-m', '-A123-asd-11', '-t10,20,30']
-
         self.testing_dir = tempfile.mkdtemp()
         self.cluster_name = "skynet"
         self.name = "9000@hal"
@@ -113,7 +112,6 @@ class TestJobGenerator(object):
                 assert_equal(pbs_str.count(flag), 1)
 
     def test_add_pbs_flags(self):
-        self.setUp()  # Dumb nosetest and unittests we should switch to pytest
         for flag in self.pbs_flags:
             yield self._test_add_pbs_flags, [flag]
 
