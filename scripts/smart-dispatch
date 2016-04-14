@@ -116,6 +116,8 @@ def main():
                       }
 
     job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME, path_job)
+    if args.pbsFlags:
+        job_generator.add_pbs_flags(args.pbsFlags.split(' '))
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
 
     # Launch the jobs
@@ -149,9 +151,10 @@ def parse_arguments():
     parser.add_argument('-f', '--commandsFile', type=file, required=False, help='File containing commands to launch. Each command must be on a seperate line. (Replaces commandAndOptions)')
 
     parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
-    parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Creates the QSUB files without launching them.')
+    parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Generate all the files without launching the job.')
 
     parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands. Default: Nb commands")
+    parser.add_argument('--pbsFlags', type=str, help='ADVANCED USAGE: Allow to pass a space seperates list of PBS flags. Ex:--pbsFlags="-lfeature=k80 -t0-4"')
     subparsers = parser.add_subparsers(dest="mode")
 
     launch_parser = subparsers.add_parser('launch', help="Launch jobs.")

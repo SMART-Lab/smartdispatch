@@ -49,9 +49,23 @@ class JobGenerator(object):
         pass
 
     def add_pbs_flags(self, flags):
+        ressources = {}
+        options = {}
+
         for flag in flags:
+            flag = flag
             if flag.startswith('-l'):
-                flag[2:].trim()
+                ressource = flag[2:]
+                split = ressource.find('=')
+                ressources[ressource[:split]] = ressource[split+1:]
+            elif flag.startswith('-'):
+                options[flag[1:2]] = flag[2:]
+            else:
+                raise ValueError("Invalid PBS flag ({})".format(flag))
+
+        for pbs in self.pbs_list:
+            pbs.add_resources(**ressources)
+            pbs.add_options(**options)
 
     def _generate_base_pbs(self):
         """ Generates PBS files allowing the execution of every commands on the given queue. """
