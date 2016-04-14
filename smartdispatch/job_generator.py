@@ -42,7 +42,16 @@ class JobGenerator(object):
         self.nb_gpus_per_command = command_params.get('nb_gpus_per_command', 1)
         #self.mem_per_command = command_params.get('mem_per_command', 0.0)
 
-    def generate_pbs(self):
+        self.pbs_list = self._generate_base_pbs()
+        if type(self) is not JobGenerator:
+            self._add_cluster_specific_rules()
+
+    def add_pbs_flags(self, flags):
+        for flag in flags:
+            if flag.startswith('-l'):
+                flag[2:].trim()
+
+    def _generate_base_pbs(self):
         """ Generates PBS files allowing the execution of every commands on the given queue. """
         nb_commands_per_node = self.queue.nb_cores_per_node // self.nb_cores_per_command
 
@@ -79,79 +88,63 @@ class JobGenerator(object):
         pbs_dir : str
             folder where to save pbs files
         """
-        pbs_list = self.generate_pbs()
+        #self.pbs_list = self._generate_base_pbs()
         pbs_filenames = []
-        for i, pbs in enumerate(pbs_list):
+        for i, pbs in enumerate(self.pbs_list):
             pbs_filename = os.path.join(pbs_dir, 'job_commands_' + str(i) + '.sh')
             pbs.save(pbs_filename)
             pbs_filenames.append(pbs_filename)
 
         return pbs_filenames
 
-    def specify_account_name_from_env(self, pbs_list, environment_variable_name):
+    def specify_account_name_from_env(self, environment_variable_name):
         if environment_variable_name not in os.environ:
             raise ValueError("Undefined environment variable: ${}. Please, provide your account name!".format(environment_variable_name))
 
         account_name = os.path.basename(os.path.realpath(os.getenv(environment_variable_name)))
-        for pbs in pbs_list:
+        for pbs in self.pbs_list:
             pbs.add_options(A=account_name)
 
-        return pbs_list
-
-    def specify_account_name_from_file(self, pbs_list, rapid_filename):
+    def specify_account_name_from_file(self, rapid_filename):
         if not os.path.isfile(rapid_filename):
             raise ValueError("Account name file {} does not exist. Please, provide your account name!".format(rapid_filename))
 
         with open(rapid_filename, 'r') as rapid_file:
             account_name = rapid_file.read().strip()
 
-        for pbs in pbs_list:
+        for pbs in self.pbs_list:
             pbs.add_options(A=account_name)
-
-        return pbs_list
 
 
 class MammouthJobGenerator(JobGenerator):
 
-    def generate_pbs(self):
-        pbs_list = super(MammouthJobGenerator, self).generate_pbs()
-
+    def _add_cluster_specific_rules(self):
         if self.queue.name.endswith("@mp2"):
-            for pbs in pbs_list:
+            for pbs in self.pbs_list:
                 pbs.resources['nodes'] = re.sub("ppn=[0-9]+", "ppn=1", pbs.resources['nodes'])
-
-        return pbs_list
 
 
 class HadesJobGenerator(JobGenerator):
 
-    def generate_pbs(self):
-        pbs_list = super(HadesJobGenerator, self).generate_pbs()
-
-        for pbs in pbs_list:
+    def _add_cluster_specific_rules(self):
+        for pbs in self.pbs_list:
             gpus = re.match(".*gpus=([0-9]+)", pbs.resources['nodes']).group(1)
             pbs.resources['nodes'] = re.sub("ppn=[0-9]+", "ppn={}".format(gpus), pbs.resources['nodes'])
             pbs.resources['nodes'] = re.sub(":gpus=[0-9]+", "", pbs.resources['nodes'])
 
-        return pbs_list
-
 
 class GuilliminJobGenerator(JobGenerator):
 
-    def generate_pbs(self):
-        pbs_list = super(GuilliminJobGenerator, self).generate_pbs()
-        return self.specify_account_name_from_env(pbs_list, 'HOME_GROUP')
+    def _add_cluster_specific_rules(self):
+        return self.specify_account_name_from_env('HOME_GROUP')
 
 
 # https://wiki.calculquebec.ca/w/Ex%C3%A9cuter_une_t%C3%A2che#tab=tab6
 class HeliosJobGenerator(JobGenerator):
 
-    def generate_pbs(self):
-        pbs_list = super(HeliosJobGenerator, self).generate_pbs()
-        pbs_list = self.specify_account_name_from_file(pbs_list, os.path.join(os.environ['HOME'], ".default_rap"))
+    def _add_cluster_specific_rules(self):
+        self.specify_account_name_from_file(os.path.join(os.environ['HOME'], ".default_rap"))
 
-        for pbs in pbs_list:
+        for pbs in self.pbs_list:
             # Remove forbidden ppn option. Default is 2 cores per gpu.
             pbs.resources['nodes'] = re.sub(":ppn=[0-9]+", "", pbs.resources['nodes'])
-
-        return pbs_list
