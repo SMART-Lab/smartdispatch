@@ -205,19 +205,36 @@ class TestHadesQueue(object):
         assert_true("ppn=2" in self.pbs8[1].__str__())
 
 
-def _test_job_generator_factory(cluster_name, job_generator_class):
-    q = Queue("test", cluster_name, 1, 1, 1, 1)
-    job_generator = job_generator_factory(q, [], cluster_name=cluster_name)
-    assert_true(isinstance(job_generator, job_generator_class))
-    assert_true(type(job_generator) is job_generator_class)
+class TestJobGeneratorFactory(object):
 
+    def setUp(self):
+        self._home_backup = os.environ['HOME']
+        os.environ['HOME'] = tempfile.mkdtemp()
 
-def test_job_generator_factory():
-    clusters = [("guillimin", GuilliminJobGenerator),
-                ("mammouth", MammouthJobGenerator),
-                ("helios", HeliosJobGenerator),
-                ("hades", HadesJobGenerator),
-                (None, JobGenerator)]
+        self.rap_filename = os.path.join(os.environ['HOME'], ".default_rap")
+        if os.path.isfile(self.rap_filename):
+            raise Exception("Test fail: {} should not be there.".format(self.rap_filename))
+        else:
+            self.rapid = 'asd-123-ab'
+            with open(self.rap_filename, 'w+') as rap_file:
+                rap_file.write(self.rapid)
 
-    for cluster_name, job_generator_class in clusters:
-        yield _test_job_generator_factory, cluster_name, job_generator_class
+    def tearDown(self):
+        shutil.rmtree(os.environ['HOME'])
+        os.environ['HOME'] = self._home_backup
+
+    def _test_job_generator_factory(self, cluster_name, job_generator_class):
+        q = Queue("test", cluster_name, 1, 1, 1, 1)
+        job_generator = job_generator_factory(q, [], cluster_name=cluster_name)
+        assert_true(isinstance(job_generator, job_generator_class))
+        assert_true(type(job_generator) is job_generator_class)
+
+    def test_job_generator_factory(self):
+        clusters = [("guillimin", GuilliminJobGenerator),
+                    ("mammouth", MammouthJobGenerator),
+                    ("helios", HeliosJobGenerator),
+                    ("hades", HadesJobGenerator),
+                    (None, JobGenerator)]
+
+        for cluster_name, job_generator_class in clusters:
+            yield self._test_job_generator_factory, cluster_name, job_generator_class
