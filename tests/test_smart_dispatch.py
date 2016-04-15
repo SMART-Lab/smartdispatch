@@ -2,7 +2,7 @@ import os
 import unittest
 import tempfile
 import shutil
-from os.path import join as pjoin
+from os.path import join as pjoin, abspath
 
 from subprocess import call
 
@@ -22,11 +22,12 @@ class TestSmartdispatcher(unittest.TestCase):
                          "echo 4 6 9", "echo 4 6 0", "echo 4 7 9", "echo 4 7 0", "echo 4 8 9", "echo 4 8 0"]
         self.nb_commands = len(self.commands)
 
-        self.smart_dispatch_command = 'smart-dispatch -C 1 -q test -t 5:00 -x'
+        scripts_path = abspath(pjoin(os.path.dirname(__file__), os.pardir, "scripts"))
+        self.smart_dispatch_command = '{} -C 1 -q test -t 5:00 -x'.format(pjoin(scripts_path, 'smart-dispatch'))
         self.launch_command = "{0} launch {1}".format(self.smart_dispatch_command, self.folded_commands)
         self.resume_command = "{0} resume {{0}}".format(self.smart_dispatch_command)
 
-        smart_dispatch_command_with_pool = 'smart-dispatch --pool 10 -C 1 -q test -t 5:00 -x {0}'
+        smart_dispatch_command_with_pool = '{} --pool 10 -C 1 -q test -t 5:00 -x {{0}}'.format(pjoin(scripts_path, 'smart-dispatch'))
         self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.folded_commands)
         self.nb_workers = 10
 
