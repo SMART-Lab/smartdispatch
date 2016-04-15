@@ -124,7 +124,7 @@ class TestMammouthQueue(object):
     def test_generate_pbs(self):
         job_generator = MammouthJobGenerator(self.queue, self.commands)
 
-        assert_true("ppn=1" in job_generator.pbs_list[0].__str__())
+        assert_true("ppn=1" in str(job_generator.pbs_list[0]))
 
 
 class TestHeliosQueue(object):
@@ -161,16 +161,16 @@ class TestHeliosQueue(object):
         assert_equal(pbs.options['-A'], self.rapid)
 
     def test_generate_pbs_ppn_is_absent(self):
-        assert_false("ppn=" in self.job_generator.pbs_list[0].__str__())
+        assert_false("ppn=" in str(self.job_generator.pbs_list[0]))
 
     def test_generate_pbs_even_nb_commands(self):
-        assert_true("gpus=4" in self.job_generator.pbs_list[0].__str__())
+        assert_true("gpus=4" in str(self.job_generator.pbs_list[0]))
 
     def test_generate_pbs_odd_nb_commands(self):
         commands = ["echo 1", "echo 2", "echo 3", "echo 4", "echo 5"]
         job_generator = HeliosJobGenerator(self.queue, commands)
 
-        assert_true("gpus=5" in job_generator.pbs_list[0].__str__())
+        assert_true("gpus=5" in str(job_generator.pbs_list[0]))
 
 
 class TestHadesQueue(object):
@@ -188,11 +188,11 @@ class TestHadesQueue(object):
         self.pbs8 = job_generator.pbs_list
 
     def test_generate_pbs_ppn(self):
-        assert_true("ppn={}".format(len(self.commands4)) in self.pbs4[0].__str__())
+        assert_true("ppn={}".format(len(self.commands4)) in str(self.pbs4[0]))
 
     def test_generate_pbs_no_gpus_used(self):
         # Hades use ppn instead og the gpus flag and breaks if gpus is there
-        assert_false("gpus=" in self.pbs4[0].__str__())
+        assert_false("gpus=" in str(self.pbs4[0]))
 
     def test_pbs_split_1_job(self):
         assert_equal(len(self.pbs4), 1)
@@ -201,8 +201,8 @@ class TestHadesQueue(object):
         assert_equal(len(self.pbs8), 2)
 
     def test_pbs_split_2_job_nb_commands(self):
-        assert_true("ppn=6" in self.pbs8[0].__str__())
-        assert_true("ppn=2" in self.pbs8[1].__str__())
+        assert_true("ppn=6" in str(self.pbs8[0]))
+        assert_true("ppn=2" in str(self.pbs8[1]))
 
 
 class TestJobGeneratorFactory(object):

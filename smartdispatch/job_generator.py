@@ -43,8 +43,10 @@ class JobGenerator(object):
         #self.mem_per_command = command_params.get('mem_per_command', 0.0)
 
         self.pbs_list = self._generate_base_pbs()
-        if type(self) is not JobGenerator:
-            self._add_cluster_specific_rules()
+        self._add_cluster_specific_rules()
+
+    def _add_cluster_specific_rules(self):
+        pass
 
     def add_pbs_flags(self, flags):
         for flag in flags:
@@ -88,7 +90,6 @@ class JobGenerator(object):
         pbs_dir : str
             folder where to save pbs files
         """
-        #self.pbs_list = self._generate_base_pbs()
         pbs_filenames = []
         for i, pbs in enumerate(self.pbs_list):
             pbs_filename = os.path.join(pbs_dir, 'job_commands_' + str(i) + '.sh')
