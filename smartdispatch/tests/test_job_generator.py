@@ -10,6 +10,7 @@ from smartdispatch.job_generator import GuilliminJobGenerator, MammouthJobGenera
 
 
 class TestJobGenerator(object):
+    pbs_flags = ['-lfeature=k80', '-lwalltime=42:42', '-lnodes=6:gpus=66', '-m', '-A123-asd-11', '-t10,20,30']
 
     def setUp(self):
         self.testing_dir = tempfile.mkdtemp()
@@ -88,6 +89,39 @@ class TestJobGenerator(object):
         job_generator = JobGenerator(self.queue, commands, command_params)
         filenames = job_generator.write_pbs_files(self.testing_dir)
         assert_equal(len(filenames), 4)
+
+    def _test_add_pbs_flags(self, flags):
+        job_generator = JobGenerator(self.queue, self.commands)
+        job_generator.add_pbs_flags(flags)
+
+        resources = []
+        options = []
+
+        for flag in flags:
+            if flag.startswith('-l'):
+                resources += [flag[:2] + ' ' + flag[2:]]
+            elif flag.startswith('-'):
+                options += [(flag[:2] + ' ' + flag[2:]).strip()]
+
+        for pbs in job_generator.pbs_list:
+            pbs_str = pbs.__str__()
+            for flag in resources:
+                assert_equal(pbs_str.count(flag), 1)
+                assert_equal(pbs_str.count(flag[:flag.find('=')]), 1)
+            for flag in options:
+                assert_equal(pbs_str.count(flag), 1)
+
+    def test_add_pbs_flags(self):
+        for flag in self.pbs_flags:
+            yield self._test_add_pbs_flags, [flag]
+
+        yield self._test_add_pbs_flags, self.pbs_flags
+
+    def test_add_pbs_flags_invalid(self):
+        assert_raises(ValueError, self._test_add_pbs_flags, 'weeee')
+
+    def test_add_pbs_flags_invalid_resource(self):
+        assert_raises(ValueError, self._test_add_pbs_flags, '-l weeee')
 
 
 class TestGuilliminQueue(object):
