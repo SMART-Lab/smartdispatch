@@ -131,12 +131,13 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(len(open(running_commands_file).readlines()), 0)
         assert_equal(len(open(pending_commands_file).readlines()), len(commands))
 
-    def test_main_resume_only_pending(self):
+    def test_main_resume_by_expanding_pool(self):
         # SetUp
         call(self.launch_command, shell=True)
         batch_uid = os.listdir(self.logs_dir)[0]
 
         # Simulate that some commands are in the running state.
+        nb_commands_files = 2  # 'commands.txt' and 'running_commands.txt'
         path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
         pending_commands_file = pjoin(path_job_commands, "commands.txt")
         running_commands_file = pjoin(path_job_commands, "running_commands.txt")
@@ -146,9 +147,17 @@ class TestSmartdispatcher(unittest.TestCase):
         with open(pending_commands_file, 'w') as pending_commands:
             pending_commands.write("\n".join(commands[1::2]) + "\n")
 
-        # Actual test (should NOT move running commands back to pending).
+        # Remove PBS files so we can check that new ones are going to be created.
+        print os.listdir(path_job_commands)
+        for f in os.listdir(path_job_commands):
+            if f.startswith('job_commands_') and f.endswith('.sh'):
+                os.remove(pjoin(path_job_commands, f))
+
+        # Actual test.
+        # Should NOT move running commands back to pending
+        # but should add new workers.
         command_line = self.resume_command.format(batch_uid)
-        command_line += " --onlyPending"
+        command_line += " --expandPool"
         exit_status = call(command_line, shell=True)
 
         # Test validation
@@ -157,3 +166,32 @@ class TestSmartdispatcher(unittest.TestCase):
         assert_equal(len(os.listdir(self.logs_dir)), 1)
         assert_equal(len(open(running_commands_file).readlines()), len(commands[::2]))
         assert_equal(len(open(pending_commands_file).readlines()), len(commands[1::2]))
+
+        nb_commands_files = 2  # 'commands.txt' and 'running_commands.txt'
+        nb_job_commands_files = len(os.listdir(path_job_commands))
+        assert_equal(nb_job_commands_files-nb_commands_files, len(commands[1::2]))
+
+        # Remove PBS files so we can check that new ones are going to be created.
+        print os.listdir(path_job_commands)
+        for f in os.listdir(path_job_commands):
+            if f.startswith('job_commands_') and f.endswith('.sh'):
+                os.remove(pjoin(path_job_commands, f))
+
+        # Actual test.
+        # Should NOT move running commands back to pending
+        # but should add `nb_workers_to_add` new workers.
+        nb_workers_to_add = 3
+        command_line = self.resume_command.format(batch_uid)
+        command_line += " --expandPool {}".format(nb_workers_to_add)
+        exit_status = call(command_line, shell=True)
+
+        # Test validation
+        assert_equal(exit_status, 0)
+        assert_true(os.path.isdir(self.logs_dir))
+        assert_equal(len(os.listdir(self.logs_dir)), 1)
+        assert_equal(len(open(running_commands_file).readlines()), len(commands[::2]))
+        assert_equal(len(open(pending_commands_file).readlines()), len(commands[1::2]))
+
+        nb_commands_files = 2  # 'commands.txt' and 'running_commands.txt'
+        nb_job_commands_files = len(os.listdir(path_job_commands))
+        assert_equal(nb_job_commands_files-nb_commands_files, nb_workers_to_add)
