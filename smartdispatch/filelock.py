@@ -3,6 +3,7 @@ import time
 import fcntl
 import psutil
 import logging
+import errno
 
 from contextlib import contextmanager
 
@@ -44,15 +45,20 @@ def open_with_flock(*args, **kwargs):
                 fcntl.lockf(f, fcntl.LOCK_EX)
                 break
             except IOError as e:
-                logging.warn("The OS complained because the process have been waiting on the lockf for {0} sec with the error ({1}: {2}). Retrying. ".format(time.time() - start_time), e.errno, e.strerror)
-                no_attempt += 1
+                if e.errno == errno.EDEADLK:
+                    logging.warn("The OS complained because the process have been waiting on the lockf for {0} sec with the error ({1}: {2}). Retrying. ".format(time.time() - start_time), e.errno, e.strerror)
+                    no_attempt += 1
+                else:
+                    raise e
 
         if no_attempt == MAX_ATTEMPTS:
             raise IOError("Failed to lock {0} {1} times.".format(f.name, MAX_ATTEMPTS))
 
-    yield f
-    fcntl.lockf(f, fcntl.LOCK_UN)
-    f.close()
+    try:
+        yield f
+    finally:
+        fcntl.lockf(f, fcntl.LOCK_UN)
+        f.close()
 
 
 @contextmanager
@@ -66,7 +72,6 @@ def open_with_dirlock(*args, **kwargs):
     while no_attempt < MAX_ATTEMPTS:
         try:
             os.mkdir(lockfile)  # Atomic operation
-            f = open(*args, **kwargs)
             break
         except OSError:
             logging.info("Can't immediately write-lock the file ({0}), retrying in {1} sec.".format(filename, TIME_BETWEEN_ATTEMPTS))
@@ -74,11 +79,13 @@ def open_with_dirlock(*args, **kwargs):
             no_attempt += 1
 
     if no_attempt == MAX_ATTEMPTS:
-        raise IOError("Failed to lock {0} {1} times.".format(f.name, MAX_ATTEMPTS))
+        raise IOError("Failed to lock {0} {1} times.".format(filename, MAX_ATTEMPTS))
 
-    yield f
-    f.close()
-    os.rmdir(lockfile)
+    try:
+        with open(*args, **kwargs) as f:
+            yield f
+    finally:
+        os.rmdir(lockfile)
 
 
 def _fs_support_globalflock(fs):
