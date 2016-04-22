@@ -105,7 +105,7 @@ def replace_uid_tag(commands):
     return [command.replace("{UID}", utils.generate_uid_from_string(command)) for command in commands]
 
 
-def get_available_queues(cluster_name=utils.detect_cluster()):
+def get_available_queues(cluster_name):
     """ Fetches all available queues on the current cluster """
     if cluster_name is None:
         return {}

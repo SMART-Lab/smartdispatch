@@ -44,7 +44,8 @@ python my_script.py 2 80 tanh 0.1
 ```
 
 Another possiblility is to generate argument from a range.
-``smart-dispatch -q qtest@mp2 launch python my_script.py [1:4]``
+
+`smart-dispatch -q qtest@mp2 launch python my_script.py [1:4]`
 
 Will generate:
 ```
@@ -54,7 +55,8 @@ python my_script.py 3
 ```
 
 You can also add a step size to the range as the 3rd argument.
-``smart-dispatch -q qtest@mp2 launch python my_script.py [1:10:2]``
+
+`smart-dispatch -q qtest@mp2 launch python my_script.py [1:10:2]`
 
 Will generate:
 ```
