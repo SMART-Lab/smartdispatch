@@ -46,7 +46,7 @@ def open_with_flock(*args, **kwargs):
                 break
             except IOError as e:
                 if e.errno == errno.EDEADLK:
-                    logging.warn("The OS complained because the process have been waiting on the lockf for {0} sec with the error ({1}: {2}). Retrying. ".format(time.time() - start_time, e.errno, e.strerror)
+                    logging.warn("The OS complained because the process have been waiting on the lockf for {0} sec with the error ({1}: {2}). Retrying. ".format(time.time() - start_time, e.errno, e.strerror))
                     no_attempt += 1
                 else:
                     raise e
