@@ -59,7 +59,8 @@ def get_commands_from_file(fileobj):
     commands : list of str
         commands read from the file
     '''
-    return fileobj.read().strip().split('\n')
+
+    return filter(None, fileobj.read().strip().split('\n'))
 
 
 def unfold_command(command):
