@@ -225,15 +225,15 @@ def test_log_command_line():
 
     shutil.rmtree(temp_dir)
 
-def test_get_commands_from_sparse_file():
 
+def test_get_commands_from_sparse_file():
     commands_1 = ["",
-                "command1 arg1 arg2",
-                "command2",
-                "",
-                "",
-                "command3 arg1 arg2 arg3 arg4",
-                ""]
+                  "command1 arg1 arg2",
+                  "command2",
+                  "",
+                  "",
+                  "command3 arg1 arg2 arg3 arg4",
+                  ""]
 
     commands_2 = [" ",
                   "command1 arg1 arg2",
@@ -244,12 +244,11 @@ def test_get_commands_from_sparse_file():
                   ""]
 
     expected_commands = ["command1 arg1 arg2",
-                "command2",
-                "command3 arg1 arg2 arg3 arg4"]
+                         "command2",
+                         "command3 arg1 arg2 arg3 arg4"]
 
     fileobj = StringIO("\n".join(commands_1))
     assert_array_equal(smartdispatch.get_commands_from_file(fileobj), expected_commands)
-
 
     # Test if there is some white in the empty line
     fileobj = StringIO("\n".join(commands_2))
