@@ -31,6 +31,9 @@ class TestSmartdispatcher(unittest.TestCase):
         self.launch_command_with_pool = smart_dispatch_command_with_pool.format('launch ' + self.folded_commands)
         self.nb_workers = 10
 
+        smart_dispatch_command_with_cores = '{} -C 1 -c {{cores}} -q test -t 5:00 -x {{0}}'.format(pjoin(scripts_path, 'smart-dispatch'))
+        self.launch_command_with_cores = smart_dispatch_command_with_cores.format('launch ' + self.folded_commands, cores='{cores}')
+
         self._cwd = os.getcwd()
         os.chdir(self.testing_dir)
 
@@ -81,6 +84,16 @@ class TestSmartdispatcher(unittest.TestCase):
         batch_uid = os.listdir(self.logs_dir)[0]
         path_job_commands = os.path.join(self.logs_dir, batch_uid, "commands")
         assert_equal(len(os.listdir(path_job_commands)), self.nb_workers + 1)
+
+    def test_main_launch_with_cores_command(self):
+        # Actual test
+        exit_status_0 = call(self.launch_command_with_cores.format(cores=0), shell=True)
+        exit_status_100 = call(self.launch_command_with_cores.format(cores=100), shell=True)
+
+        # Test validation
+        assert_equal(exit_status_0, 2)
+        assert_equal(exit_status_100, 2)        
+        assert_true(os.path.isdir(self.logs_dir))
 
     def test_main_resume(self):
         # Setup
