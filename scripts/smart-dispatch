@@ -20,6 +20,9 @@ from smartdispatch.filelock import open_with_lock
 import logging
 import smartdispatch
 
+# For cluster job_id mismatch
+import re
+
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 CLUSTER_NAME = utils.detect_cluster()
 AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
@@ -137,6 +140,14 @@ def main():
         for pbs_filename in pbs_filenames:
             qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
             jobs_id += [qsub_output.strip()]
+
+            # On some clusters, SRMJID and PBS_JOBID don't match
+            if CLUSTER_NAME in ['helios']:
+                qstat_out = check_output(['qstat', '-f']).split('Job Id: ')
+                for job in qstat_out:
+                    if re.search(r"SRMJID:{job_id}".format(job_id=jobs_id[-1]), job):
+                        pbs_job_id = re.match(r"[0-9a-zA-Z.-]*", job).group()
+                        jobs_id[-1] = 'PBS_JOBID: {pbs}, SRMJID: {srm}'.format(pbs=pbs_job_id, srm=jobs_id[-1])
 
         with open_with_lock(pjoin(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
             jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
