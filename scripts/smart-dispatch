@@ -128,6 +128,14 @@ def main():
                       }
 
     job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME, path_job)
+    ctr = 0
+    # generating default names per each jobs in each batch
+    for pbs in job_generator.pbs_list:
+        proper_size_name = utils.jobname_generator(jobname, str(ctr))
+        pbs.add_options(N=proper_size_name)
+        ctr += 1
+
+
     if args.pbsFlags is not None:
         job_generator.add_pbs_flags(args.pbsFlags.split(' '))
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
