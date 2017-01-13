@@ -36,9 +36,9 @@ def test_generate_uid_from_string():
     assert_true(utils.generate_uid_from_string("same text") != utils.generate_uid_from_string("sametext"))
 
 def test_jobname_generator():
-    assertNotEqual(len(utils.jobname_generator("a-string-which-has-a-longer-length-nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn-than-64", 8798777)), 63)
-    assertNotEqual(len(utils.jobname_generator("abcde",3)), 7)
-    assertNotEqual(len(utils.jobname_generator(("",21)), 3))
+    assert_equal(len(utils.jobname_generator("a-string-which-has-a-longer-length-nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn-than-64", 8798777)), 64)
+    assert_equal(len(utils.jobname_generator("abcde",3)), 7)
+    assert_equal(len(utils.jobname_generator("",21)), 3)
 
 def test_slugify():
     testing_arguments = [("command", "command"),
