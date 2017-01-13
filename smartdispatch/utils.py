@@ -6,7 +6,7 @@ import json
 from distutils.util import strtobool
 from subprocess import Popen, PIPE
 
-def jobname_generator(jobname, job_id_int):
+def jobname_generator(jobname, job_id):
     '''Crop the jobname to a maximum of 64 characters.
     Parameters
     ----------
@@ -20,7 +20,7 @@ def jobname_generator(jobname, job_id_int):
     The cropped version of the string.  
     '''
     # 64 - 1 since the total length including -1 should be less than 64
-    job_id = str(job_id_int)
+    job_id = str(job_id)
     if len(jobname) + len(job_id) > 63:
         croped_string = '{}_{}'.format(jobname[:63 - len(job_id)], job_id)
     else:
