@@ -17,7 +17,7 @@ def jobname_generator(jobname, job_id_int):
     Returns
     -------
     str
-    The cropped version of the string.	
+    The cropped version of the string.  
     '''
     # 64 - 1 since the total length including -1 should be less than 64
     job_id = str(job_id_int)
