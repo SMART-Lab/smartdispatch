@@ -27,6 +27,7 @@ def jobname_generator(jobname, job_id):
         croped_string = '{}_{}'.format(jobname, job_id)
     return croped_string
 
+
 def print_boxed(string):
     splitted_string = string.split('\n')
     max_len = max(map(len, splitted_string))
