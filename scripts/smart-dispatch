@@ -50,9 +50,9 @@ def main():
 
         commands = smartdispatch.replace_uid_tag(commands)
         nb_commands = len(commands)  # For print at the end
-        
+
         if args.batchName:
-            jobname = smartdispatch.generate_logfolder_name(utils.slugify(batchName), max_length=235)
+            jobname = smartdispatch.generate_logfolder_name(utils.slugify(args.batchName), max_length=235)
 
     elif args.mode == "resume":
         jobname = args.batch_uid
@@ -135,8 +135,6 @@ def main():
     for pbs_id, pbs in enumerate(job_generator.pbs_list):
         proper_size_name = utils.jobname_generator(jobname, pbs_id)
         pbs.add_options(N=proper_size_name)
-        
-
 
     if args.pbsFlags is not None:
         job_generator.add_pbs_flags(args.pbsFlags.split(' '))
@@ -166,10 +164,10 @@ def main():
     print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
 
 
-def parse_arguments():  
+def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--queueName', required=True, help='Queue used (ex: qwork@mp2, qfat256@mp2, gpu_1)')
-    parser.add_argument('-N', '--batchName', required=False, help='The name of the batch. Default: The commands launched.')
+    parser.add_argument('-n', '--batchName', required=False, help='The name of the batch. Default: The commands launched.')
     parser.add_argument('-t', '--walltime', required=False, help='Set the estimated running time of your jobs using the DD:HH:MM:SS format. Note that they will be killed when this time limit is reached.')
     parser.add_argument('-L', '--launcher', choices=['qsub', 'msub'], required=False, help='Which launcher to use. Default: qsub')
     parser.add_argument('-C', '--coresPerNode', type=int, required=False, help='How many cores there are per node.')
