@@ -6,7 +6,6 @@ import sys
 import argparse
 import time as t
 from os.path import join as pjoin
-from subprocess import check_output
 from textwrap import dedent
 
 from smartdispatch.command_manager import CommandManager
@@ -14,19 +13,37 @@ from smartdispatch.command_manager import CommandManager
 from smartdispatch.queue import Queue
 from smartdispatch.job_generator import job_generator_factory
 from smartdispatch import get_available_queues
+from smartdispatch import launch_jobs
 from smartdispatch import utils
-from smartdispatch.filelock import open_with_lock
 
 import logging
 import smartdispatch
-
-# For cluster job_id mismatch
-import re
 
 LOGS_FOLDERNAME = "SMART_DISPATCH_LOGS"
 CLUSTER_NAME = utils.detect_cluster()
 AVAILABLE_QUEUES = get_available_queues(CLUSTER_NAME)
 LAUNCHER = utils.get_launcher(CLUSTER_NAME)
+
+# Autoresume settings.
+TIMEOUT_EXIT_CODE = 124
+AUTORESUME_TRIGGER_AFTER = '$(($PBS_WALLTIME - 60))'  # By default, 60s before the maximum walltime.
+AUTORESUME_WORKER_CALL_PREFIX = 'timeout -s TERM {trigger_after} '.format(trigger_after=AUTORESUME_TRIGGER_AFTER)
+AUTORESUME_WORKER_CALL_SUFFIX = ' WORKER_PIDS+=" $!"'
+AUTORESUME_PROLOG = 'WORKER_PIDS=""' 
+AUTORESUME_EPILOG = """\
+NEED_TO_RESUME=false
+for WORKER_PID in $WORKER_PIDS; do
+    wait "$WORKER_PID"
+    RETURN_CODE=$?
+    if [ $RETURN_CODE -eq {timeout_exit_code} ]; then
+        NEED_TO_RESUME=true
+    fi
+done
+if [ "$NEED_TO_RESUME" = true ]; then
+    echo "Autoresuming using: {{launcher}} $PBS_FILENAME"
+    sd-launch-pbs --launcher {{launcher}} $PBS_FILENAME {{path_job}}
+fi
+""".format(timeout_exit_code=TIMEOUT_EXIT_CODE)
 
 
 def main():
@@ -110,10 +127,23 @@ def main():
 
     # Generating all the worker commands
     worker_script = pjoin(os.path.dirname(smartdispatch.__file__), 'workers', 'base_worker.py')
-    COMMAND_STRING = 'cd "{cwd}"; python2 {worker_script} "{commands_file}" "{log_folder}" '\
+    worker_script_flags = ''
+    if args.autoresume:
+        worker_script_flags = '-r'
+
+    worker_call_prefix = ''
+    worker_call_suffix = ''
+    if args.autoresume:
+        worker_call_prefix = AUTORESUME_WORKER_CALL_PREFIX
+        worker_call_suffix = AUTORESUME_WORKER_CALL_SUFFIX
+
+    COMMAND_STRING = 'cd "{cwd}"; {worker_call_prefix}python2 {worker_script} {worker_script_flags} "{commands_file}" "{log_folder}" '\
                      '1>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.o" '\
-                     '2>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.e" '
-    COMMAND_STRING = COMMAND_STRING.format(cwd=os.getcwd(), worker_script=worker_script, commands_file=command_manager._commands_filename, log_folder=path_job_logs)
+                     '2>> "{log_folder}/worker/$PBS_JOBID\"\"_worker_{{ID}}.e" &'\
+                     '{worker_call_suffix}'
+    COMMAND_STRING = COMMAND_STRING.format(cwd=os.getcwd(), worker_call_prefix=worker_call_prefix, worker_script=worker_script,
+                                           worker_script_flags=worker_script_flags, commands_file=command_manager._commands_filename,
+                                           log_folder=path_job_logs, worker_call_suffix=worker_call_suffix)
     commands = [COMMAND_STRING.format(ID=i) for i in range(args.pool)]
 
     # TODO: use args.memPerNode instead of args.memPerNode
@@ -130,12 +160,19 @@ def main():
                       'mem_per_command': None  # args.memPerCommand
                       }
 
-    job_generator = job_generator_factory(queue, commands, command_params, CLUSTER_NAME, path_job)
+    prolog = []
+    epilog = ['wait']
+    if args.autoresume:
+        prolog = [AUTORESUME_PROLOG]
+        epilog = [AUTORESUME_EPILOG.format(launcher=LAUNCHER if args.launcher is None else args.launcher, path_job=path_job)]
+
+    job_generator = job_generator_factory(queue, commands, prolog, epilog, command_params, CLUSTER_NAME, path_job)
+    
     # generating default names per each jobs in each batch
     for pbs_id, pbs in enumerate(job_generator.pbs_list):
         proper_size_name = utils.jobname_generator(jobname, pbs_id)
         pbs.add_options(N=proper_size_name)
-
+    
     if args.pbsFlags is not None:
         job_generator.add_pbs_flags(args.pbsFlags.split(' '))
     pbs_filenames = job_generator.write_pbs_files(path_job_commands)
@@ -144,23 +181,7 @@ def main():
     print "## {nb_commands} command(s) will be executed in {nb_jobs} job(s) ##".format(nb_commands=nb_commands, nb_jobs=len(pbs_filenames))
     print "Batch UID:\n{batch_uid}".format(batch_uid=jobname)
     if not args.doNotLaunch:
-        jobs_id = []
-        for pbs_filename in pbs_filenames:
-            qsub_output = check_output('{launcher} {pbs_filename}'.format(launcher=LAUNCHER if args.launcher is None else args.launcher, pbs_filename=pbs_filename), shell=True)
-            jobs_id += [qsub_output.strip()]
-
-            # On some clusters, SRMJID and PBS_JOBID don't match
-            if CLUSTER_NAME in ['helios']:
-                qstat_out = check_output(['qstat', '-f']).split('Job Id: ')
-                for job in qstat_out:
-                    if re.search(r"SRMJID:{job_id}".format(job_id=jobs_id[-1]), job):
-                        pbs_job_id = re.match(r"[0-9a-zA-Z.-]*", job).group()
-                        jobs_id[-1] = '{pbs}'.format(pbs=pbs_job_id)
-
-        with open_with_lock(pjoin(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
-            jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
-            jobs_id_file.writelines("\n".join(jobs_id) + "\n")
-        print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))
+        launch_jobs(LAUNCHER if args.launcher is None else args.launcher, pbs_filenames, CLUSTER_NAME, path_job)
     print "\nLogs, command, and jobs id related to this batch will be in:\n {smartdispatch_folder}".format(smartdispatch_folder=path_job)
 
 
@@ -181,6 +202,7 @@ def parse_arguments():
 
     parser.add_argument('-l', '--modules', type=str, required=False, help='List of additional modules to load.', nargs='+')
     parser.add_argument('-x', '--doNotLaunch', action='store_true', help='Generate all the files without launching the job.')
+    parser.add_argument('-r', '--autoresume', action='store_true', help='Requeue the job when the running time hits the maximum walltime allowed on the cluster. Assumes that commands are resumable.')
 
     parser.add_argument('-p', '--pool', type=int, help="Number of workers that will be consuming commands. Default: Nb commands")
     parser.add_argument('--pbsFlags', type=str, help='ADVANCED USAGE: Allow to pass a space seperated list of PBS flags. Ex:--pbsFlags="-lfeature=k80 -t0-4"')

@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+import signal
 import argparse
 import subprocess
 import logging
@@ -15,6 +17,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('commands_filename', type=str, help='File containing all commands to execute.')
     parser.add_argument('logs_dir', type=str, help="Folder where to put commands' stdout and stderr.")
+    parser.add_argument('-r', '--assumeResumable', action='store_true', help="Assume that commands are resumable and put them into the pending list on worker termination.")
     args = parser.parse_args()
 
     # Check for invalid arguments
@@ -35,8 +38,37 @@ def main():
 
     command_manager = CommandManager(args.commands_filename)
 
+    if args.assumeResumable:
+        # Handle TERM signal gracefully by sending running commands back to
+        # the list of pending commands.
+        # NOTE: There are several cases when the handler will not have
+        #       up-to-date information on running the command and/or process,
+        #       but chances of that happening are VERY slim and the
+        #       consequences are not fatal.
+        def sigterm_handler(signal, frame):
+            if sigterm_handler.triggered:
+                return
+            else:
+                sigterm_handler.triggered = True
+            error_code = 0
+            if sigterm_handler.proc is not None:
+                error_code = sigterm_handler.proc.wait()
+            if sigterm_handler.command is not None:
+                if error_code == 0:  # The command was terminated successfully.
+                    command_manager.set_running_command_as_pending(sigterm_handler.command)
+                else:
+                    command_manager.set_running_command_as_finished(sigterm_handler.command, error_code)
+            sys.exit(0)
+        sigterm_handler.triggered = False
+        sigterm_handler.command = None
+        sigterm_handler.proc = None
+        signal.signal(signal.SIGTERM, sigterm_handler)
+
     while True:
         command = command_manager.get_command_to_run()
+        if args.assumeResumable:
+            sigterm_handler.proc = None
+            sigterm_handler.command = command
 
         if command is None:
             break
@@ -62,7 +94,10 @@ def main():
                 stderr_file.write(log_datetime + log_command)
                 stderr_file.flush()
 
-                error_code = subprocess.call(command, stdout=stdout_file, stderr=stderr_file, shell=True)
+                proc = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file, shell=True)
+                if args.assumeResumable:
+                    sigterm_handler.proc = proc
+                error_code = proc.wait()
 
         command_manager.set_running_command_as_finished(command, error_code)
 

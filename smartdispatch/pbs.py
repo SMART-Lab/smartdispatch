@@ -25,7 +25,9 @@ class PBS(object):
 
         self.queue_name = queue_name
         self.modules = []
+        self.prolog = []
         self.commands = []
+        self.epilog = []
 
         self.resources = OrderedDict()
         self.add_resources(walltime=walltime)
@@ -103,6 +105,16 @@ class PBS(object):
         """
         self.modules += modules
 
+    def add_to_prolog(self, *code):
+        """ Adds the code to be executed before the commands.
+
+        Parameters
+        ----------
+        *code : list of str
+            Each string holds the code to be executed before the commands
+        """
+        self.prolog += code
+
     def add_commands(self, *commands):
         """ Sets commands to execute on a node.
 
@@ -112,6 +124,16 @@ class PBS(object):
             each string represents a command that is part of this job
         """
         self.commands += commands
+
+    def add_to_epilog(self, *code):
+        """ Adds the code to be executed after the commands.
+
+        Parameters
+        ----------
+        *code : list of str
+            Each string holds the code to be executed after the commands
+        """
+        self.epilog += code
 
     def save(self, filename):
         """ Saves this PBS job to a file.
@@ -141,8 +163,13 @@ class PBS(object):
         for module in self.modules:
             pbs += ["module load " + module]
 
-        pbs += ["\n# Commands #"]
-        pbs += ["{command} &".format(command=command) for command in self.commands]
+        pbs += ["\n# Prolog #"]
+        pbs += self.prolog
 
-        pbs += ["\nwait"]
+        pbs += ["\n# Commands #"]
+        pbs += ["{command}".format(command=command) for command in self.commands]
+
+        pbs += ["\n# Epilog #"]
+        pbs += self.epilog
+
         return "\n".join(pbs)

@@ -58,6 +58,11 @@ class CommandManager(object):
             with open_with_lock(file_name, 'a') as finished_commands_file:
                 self._move_line_between_files(running_commands_file, finished_commands_file, command + '\n')
 
+    def set_running_command_as_pending(self, command):
+        with open_with_lock(self._running_commands_filename, 'r+') as running_commands_file:
+            with open_with_lock(self._commands_filename, 'a') as commands_file:
+                self._move_line_between_files(running_commands_file, commands_file, command + '\n')
+
     def reset_running_commands(self):
         if os.path.isfile(self._running_commands_filename):
             with open_with_lock(self._commands_filename, 'r+') as commands_file:

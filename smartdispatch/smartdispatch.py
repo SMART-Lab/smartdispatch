@@ -5,6 +5,7 @@ import re
 import itertools
 import time as t
 from os.path import join as pjoin
+from subprocess import check_output
 
 import smartdispatch
 from smartdispatch import utils
@@ -164,3 +165,37 @@ def log_command_line(path_job, command_line):
         command_line = command_line.replace('"', r'\"')  # Make sure we can paste the command line as-is
         command_line = re.sub(r'(\[)([^\[\]]*\\ [^\[\]]*)(\])', r'"\1\2\3"', command_line)  # Make sure we can paste the command line as-is
         command_line_log.write(command_line + "\n\n")
+
+
+def launch_jobs(launcher, pbs_filenames, cluster_name, path_job):  # pragma: no cover
+    ''' Invokes launcher on a set of PBS files.
+
+    Parameters
+    ----------
+    launcher : str
+        launcher name
+    pbs_filenames : list of str
+        a list of PBS files to launch
+    cluster_name : str
+        cluster name
+    path_job : str
+        path to the job folder
+    '''
+    jobs_id = []
+    for pbs_filename in pbs_filenames:
+        launcher_output = check_output('PBS_FILENAME={pbs_filename} {launcher} {pbs_filename}'.format(
+            launcher=launcher, pbs_filename=pbs_filename), shell=True)
+        jobs_id += [launcher_output.strip()]
+
+        # On some clusters, SRMJID and PBS_JOBID don't match
+        if cluster_name in ['helios']:
+            launcher_output = check_output(['qstat', '-f']).split('Job Id: ')
+            for job in launcher_output:
+                if re.search(r"SRMJID:{job_id}".format(job_id=jobs_id[-1]), job):
+                    pbs_job_id = re.match(r"[0-9a-zA-Z.-]*", job).group()
+                    jobs_id[-1] = '{pbs}'.format(pbs=pbs_job_id)
+
+    with open_with_lock(pjoin(path_job, "jobs_id.txt"), 'a') as jobs_id_file:
+        jobs_id_file.writelines(t.strftime("## %Y-%m-%d %H:%M:%S ##\n"))
+        jobs_id_file.writelines("\n".join(jobs_id) + "\n")
+    print "\nJobs id:\n{jobs_id}".format(jobs_id=" ".join(jobs_id))

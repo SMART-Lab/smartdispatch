@@ -97,6 +97,23 @@ class CommandFilesTests(unittest.TestCase):
 
         assert_true(not os.path.isfile(self.command_manager._failed_commands_filename))
 
+    def test_set_running_command_as_pending(self):
+        # SetUp
+        command = self.command_manager.get_command_to_run()
+
+        # The function to test
+        self.command_manager.set_running_command_as_pending(command)
+
+        # Test validation
+        with open(self.command_manager._commands_filename, "r") as commands_file:
+            assert_equal(commands_file.read(), self.command2 + self.command3 + self.command1)
+
+        with open(self.command_manager._running_commands_filename, "r") as running_commands_file:
+            assert_equal(running_commands_file.read(), "")
+
+        assert_true(not os.path.isfile(self.command_manager._finished_commands_filename))
+        assert_true(not os.path.isfile(self.command_manager._failed_commands_filename))
+
     def test_set_running_command_as_failed(self):
         # SetUp
         command = self.command_manager.get_command_to_run()
