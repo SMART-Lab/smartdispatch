@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='smart-dispatch',
-    version='2.0.0',
+    version='2.0.1',
     author='Stanislas Lauly, Marc-Alexandre Côté, Mathieu Germain',
     author_email='smart-udes-dev@googlegroups.com',
     packages=['smartdispatch',
