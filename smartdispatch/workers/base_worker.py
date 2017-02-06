@@ -50,14 +50,11 @@ def main():
                 return
             else:
                 sigterm_handler.triggered = True
-            error_code = 0
+
             if sigterm_handler.proc is not None:
-                error_code = sigterm_handler.proc.wait()
+                sigterm_handler.proc.wait()
             if sigterm_handler.command is not None:
-                if error_code == 0:  # The command was terminated successfully.
-                    command_manager.set_running_command_as_pending(sigterm_handler.command)
-                else:
-                    command_manager.set_running_command_as_finished(sigterm_handler.command, error_code)
+                command_manager.set_running_command_as_pending(sigterm_handler.command)
             sys.exit(0)
         sigterm_handler.triggered = False
         sigterm_handler.command = None
