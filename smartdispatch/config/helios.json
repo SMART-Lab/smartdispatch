@@ -1,7 +1,7 @@
 {
     "gpu_8": {
         "ram": 126,
-        "modules": ["cuda/7.5.18"],
+        "modules": ["cuda/8.0.44"],
         "cores": 20,
         "max_walltime": "12:00:00",
         "gpus": 8,
@@ -9,7 +9,7 @@
     },
     "gpu_4": {
         "ram": 63,
-        "modules": ["cuda/7.5.18"],
+        "modules": ["cuda/8.0.44"],
         "cores": 10,
         "max_walltime": "12:00:00",
         "gpus": 4,
@@ -17,7 +17,7 @@
     },
     "gpu_1": {
         "ram": 16,
-        "modules": ["cuda/7.5.18"],
+        "modules": ["cuda/8.0.44"],
         "cores": 1,
         "max_walltime": "12:00:00",
         "gpus": 1,
@@ -25,7 +25,7 @@
     },
     "test": {
         "ram": 126,
-        "modules": ["cuda/7.5.18"],
+        "modules": ["cuda/8.0.44"],
         "cores": 20,
         "max_walltime": "15:00",
         "gpus": 8,
